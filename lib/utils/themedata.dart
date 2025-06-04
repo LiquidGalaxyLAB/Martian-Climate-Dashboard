@@ -4,13 +4,12 @@ class AppTheme {
   static ThemeData lightTheme = ThemeData(
     brightness: Brightness.light,
     useMaterial3: true,
-    // canvasColor: Color(0xFFE9F8EE),
+    primaryColor: const Color(0xFFE9F8EE),
     scaffoldBackgroundColor: Colors.white,
     primarySwatch: Colors.green,
     inputDecorationTheme: const InputDecorationTheme(
       filled: true,
       fillColor: Color(0xFFE9F8EE),
-
       border: OutlineInputBorder(
         borderRadius: BorderRadius.all(Radius.circular(10)),
         borderSide: BorderSide.none,
@@ -24,6 +23,7 @@ class AppTheme {
         borderSide: BorderSide.none,
       ),
     ),
+
     appBarTheme: const AppBarTheme(
       backgroundColor: Colors.white,
       // foregroundColor: Colors.white,
@@ -36,9 +36,10 @@ class AppTheme {
         fontFamily: 'Roboto',
       ),
     ),
+    disabledColor: Color(0xFFEDEFEE),
     colorScheme: ColorScheme.fromSwatch(
-      primarySwatch: Colors.deepOrange,
-    ).copyWith(secondary: Colors.amber),
+      primarySwatch: Colors.green,
+    ).copyWith(secondary: Color(0xFFEDEFEE)),
   );
 
   static ThemeData darkTheme = ThemeData(

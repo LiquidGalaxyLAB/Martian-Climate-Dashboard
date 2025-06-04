@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:martian_climate_dashboard/widgets/date_picker.dart';
 import 'package:martian_climate_dashboard/widgets/drawer.dart';
-import 'package:martian_climate_dashboard/widgets/picker.dart';
+import 'package:martian_climate_dashboard/widgets/parameter_picker.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -35,6 +36,34 @@ class HomePage extends StatelessWidget {
                 hintText: 'Mars Atmospheric Scenario',
                 selectedParameter: 'Martian Year 35',
               ),
+            ),
+            SizedBox(height: 10),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 13.0),
+              child: Text(
+                'Date Range',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
+              ),
+            ),
+            SizedBox(height: 3),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 16),
+                  child: DatePicker(
+                    onDateSelected: (p0) => print(p0.toIso8601String()),
+                    enabled: true,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: DatePicker(
+                    onDateSelected: (p0) => print(p0.toIso8601String()),
+                    enabled: false,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
