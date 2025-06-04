@@ -22,6 +22,7 @@ class ParameterPicker extends StatelessWidget {
         ),
         SizedBox(height: 3),
         DropdownButtonFormField<String>(
+          icon: const Icon(Icons.keyboard_arrow_down_sharp),
           value: selectedParameter,
           isDense: true,
           decoration: const InputDecoration(

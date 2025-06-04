@@ -23,7 +23,28 @@ class AppTheme {
         borderSide: BorderSide.none,
       ),
     ),
-
+    checkboxTheme: CheckboxThemeData(
+      fillColor: WidgetStateProperty.all<Color>(Color(0xFFE9F8EE)),
+      checkColor: WidgetStateProperty.all<Color>(Colors.black54),
+      overlayColor: WidgetStateProperty.all<Color>(Colors.transparent),
+      side: BorderSide(color: Color(0xFFD1B7B7), width: 1.0),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF212121),
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.0),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+      ),
+    ),
+    buttonTheme: ButtonThemeData(
+      buttonColor: Color(0xFF212121),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+      textTheme: ButtonTextTheme.primary,
+    ),
     appBarTheme: const AppBarTheme(
       backgroundColor: Colors.white,
       // foregroundColor: Colors.white,

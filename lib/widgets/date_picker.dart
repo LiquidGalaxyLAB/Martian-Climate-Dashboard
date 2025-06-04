@@ -12,13 +12,13 @@ class DatePicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 0.0),
+      padding: const EdgeInsets.only(left: 12.0),
       decoration: BoxDecoration(
         color:
             enabled
                 ? Theme.of(context).primaryColor
                 : Theme.of(context).colorScheme.secondary,
-        borderRadius: BorderRadius.circular(8.0),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -29,6 +29,7 @@ class DatePicker extends StatelessWidget {
               fontWeight: enabled ? FontWeight.bold : FontWeight.normal,
             ),
           ),
+          SizedBox(width: 10.0),
           IconButton(
             icon: const Icon(Icons.calendar_month_outlined),
             padding: const EdgeInsets.all(0.0),
