@@ -1,3 +1,13 @@
+/// A stateless widget that displays a labeled dropdown for selecting a parameter.
+///
+/// The [ParameterPicker] widget shows a label (provided by [hintText]) and a
+///
+/// Parameters:
+/// - [selectedParameter]: The value of the currently selected parameter.
+/// - [hintText]: The label displayed above the dropdown.
+///
+library;
+
 import 'package:flutter/material.dart';
 
 class ParameterPicker extends StatelessWidget {
@@ -45,9 +55,7 @@ class ParameterPicker extends StatelessWidget {
               child: Text('Martian Year 35'),
             ),
           ],
-          onChanged: (value) {
-            // Handle parameter selection
-          },
+          onChanged: (value) {},
         ),
       ],
     );

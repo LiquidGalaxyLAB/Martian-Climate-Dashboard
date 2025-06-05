@@ -1,3 +1,18 @@
+/// A custom date picker widget that displays a styled container with a date label and a calendar icon.
+///
+/// When the calendar icon is pressed and the widget is enabled, a date picker dialog is shown.
+/// Upon selecting a date, the [onDateSelected] callback is triggered with the selected [DateTime].
+///
+/// The appearance of the widget changes based on the [enabled] flag:
+/// - If enabled, the background color uses the theme's primary color and the label is bold.
+/// - If disabled, the background uses the theme's secondary color and the label is normal weight.
+///
+/// Parameters:
+/// - [onDateSelected]: Callback function invoked when a date is selected.
+/// - [enabled]: Determines if the date picker is interactive and styled as enabled.
+///
+library;
+
 import 'package:flutter/material.dart';
 
 class DatePicker extends StatelessWidget {
