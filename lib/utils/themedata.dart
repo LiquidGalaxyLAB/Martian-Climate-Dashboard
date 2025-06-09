@@ -1,3 +1,16 @@
+/// A utility class that defines the application's light and dark themes.
+///
+/// The [AppTheme] class provides two static [ThemeData] objects:
+/// - [lightTheme]: Configures the theme for light mode, including colors,
+///   input decorations, button styles, checkbox styles, and app bar appearance.
+/// - [darkTheme]: Configures the theme for dark mode, with its own color scheme
+///   and app bar styling.
+///
+/// Both themes use Material 3 design principles where applicable and set up
+/// consistent color schemes and widget theming for a cohesive look across the app.
+/// see https://www.figma.com/design/oz24IjaYoF4DMuojSZhsge/Mars-Vision--Mars-climate-dashboard
+library;
+
 import 'package:flutter/material.dart';
 
 class AppTheme {
