@@ -1,3 +1,16 @@
+/// Button widget for the Martian Climate Dashboard.
+///
+/// [MCDButton] displays a Material Design elevated button with configurable
+/// text and an optional callback for when the button is pressed. The button
+/// stretches to fill the available width and includes padding for visual
+/// separation.
+///
+/// Parameters:
+/// - [onPressed]: The callback that is called when the button is tapped or pressed.
+///   If null, the button will be disabled.
+/// - [text]: The text label displayed on the button. This parameter is required.
+library;
+
 import 'package:flutter/material.dart';
 
 class MCDButton extends StatelessWidget {
