@@ -20,9 +20,12 @@ class AppTheme {
     primaryColor: const Color(0xFFE9F8EE),
     scaffoldBackgroundColor: Colors.white,
     primarySwatch: Colors.green,
+
     inputDecorationTheme: const InputDecorationTheme(
       filled: true,
       fillColor: Color(0xFFE9F8EE),
+      hintStyle: TextStyle(color: Colors.black54),
+      labelStyle: TextStyle(color: Colors.black54),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.all(Radius.circular(10)),
         borderSide: BorderSide.none,
@@ -36,6 +39,7 @@ class AppTheme {
         borderSide: BorderSide.none,
       ),
     ),
+
     checkboxTheme: CheckboxThemeData(
       fillColor: WidgetStateProperty.all<Color>(Color(0xFFE9F8EE)),
       checkColor: WidgetStateProperty.all<Color>(Colors.black54),
@@ -43,6 +47,7 @@ class AppTheme {
       side: BorderSide(color: Color(0xFFD1B7B7), width: 1.0),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
     ),
+
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: const Color(0xFF212121),
@@ -53,11 +58,13 @@ class AppTheme {
         padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
       ),
     ),
+
     buttonTheme: ButtonThemeData(
       buttonColor: Color(0xFF212121),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
       textTheme: ButtonTextTheme.primary,
     ),
+
     appBarTheme: const AppBarTheme(
       backgroundColor: Colors.white,
       // foregroundColor: Colors.white,
@@ -70,6 +77,7 @@ class AppTheme {
         fontFamily: 'Roboto',
       ),
     ),
+
     disabledColor: Color(0xFFEDEFEE),
     colorScheme: ColorScheme.fromSwatch(
       primarySwatch: Colors.green,
