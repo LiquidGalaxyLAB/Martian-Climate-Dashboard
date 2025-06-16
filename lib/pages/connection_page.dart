@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:martian_climate_dashboard/services/lg_service.dart';
 import 'package:martian_climate_dashboard/widgets/button.dart';
+import 'package:martian_climate_dashboard/widgets/drawer.dart';
 import 'package:martian_climate_dashboard/widgets/input.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -52,20 +53,25 @@ class _ConnectPageState extends State<ConnectPage> {
 
     return Scaffold(
       // backgroundColor: ThemeColors.backgroundColor,
-      appBar: AppBar(title: const Text('Mars Vision')),
+      appBar: AppBar(title: const Text('Connect')),
+      // drawer: MCDDrawer(),
       // appBar: AppBarPilot(title: "Connect"),
       // drawer: DrawerPilot(  ),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            MCDButton(
-              onPressed: () {
-                //   Navigator.of(
-                //     context,
-                //   ).push(MaterialPageRoute(builder: (context) => QRPage()));
-              },
-              text: "Scan Using QR",
-              color: Theme.of(context).primaryColor,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: MCDButton(
+                textColor: Colors.black,
+                onPressed: () {
+                  //   Navigator.of(
+                  //     context,
+                  //   ).push(MaterialPageRoute(builder: (context) => QRPage()));
+                },
+                text: "Scan Using QR",
+                color: Theme.of(context).primaryColor,
+              ),
             ),
             ChoiceDivider(),
             FormInput(
@@ -96,56 +102,59 @@ class _ConnectPageState extends State<ConnectPage> {
               controller: screenCountController,
             ),
             SizedBox(height: 20),
-            MCDButton(
-              text: "CONNECT",
-              onPressed: () async {
-                print(hostController.text);
-                final SharedPreferences prefs =
-                    await SharedPreferences.getInstance();
-                try {
-                  lgService.host = hostController.text;
-                  lgService.port =
-                      portController.text.isNotEmpty
-                          ? int.parse(portController.text)
-                          : 22;
-                  lgService.username = usernameController.text;
-                  lgService.password = passwordController.text;
-                  lgService.rigs =
-                      int.tryParse(screenCountController.text) ?? 0;
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: MCDButton(
+                text: "CONNECT",
+                onPressed: () async {
+                  print(hostController.text);
+                  final SharedPreferences prefs =
+                      await SharedPreferences.getInstance();
+                  try {
+                    lgService.host = hostController.text;
+                    lgService.port =
+                        portController.text.isNotEmpty
+                            ? int.parse(portController.text)
+                            : 22;
+                    lgService.username = usernameController.text;
+                    lgService.password = passwordController.text;
+                    lgService.rigs =
+                        int.tryParse(screenCountController.text) ?? 0;
 
-                  prefs.setString('host', lgService.host);
-                  prefs.setInt('port', lgService.port);
-                  prefs.setString('username', lgService.username);
-                  prefs.setString('password', lgService.password);
-                  prefs.setInt('rigs', lgService.rigs);
+                    prefs.setString('host', lgService.host);
+                    prefs.setInt('port', lgService.port);
+                    prefs.setString('username', lgService.username);
+                    prefs.setString('password', lgService.password);
+                    prefs.setInt('rigs', lgService.rigs);
 
-                  bool res = await lgService.checkConnection();
-                  print(res);
-                  if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      // backgroundColor: ThemeColors.primaryColor,
-                      content: Text(
-                        res ? 'Connected' : 'Failed to connect',
-                        // style: TextStyle(color: ThemeColors.primaryTextColor),
+                    bool res = await lgService.checkConnection();
+                    print(res);
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        // backgroundColor: ThemeColors.primaryColor,
+                        content: Text(
+                          res ? 'Connected' : 'Failed to connect',
+                          // style: TextStyle(color: ThemeColors.primaryTextColor),
+                        ),
                       ),
-                    ),
-                  );
-                } catch (e) {
-                  print(e.toString());
-                  if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: ${e.toString()}')),
-                  );
-                }
-              },
-              // fillColor: ThemeColors.inverseBackgroundColor,
-              // textColor: ThemeColors.inverseTextColor,
-              // textDecoration: TextStyle(
-              //   fontSize: 20.0,
-              //   color: ThemeColors.inverseTextColor,
-              //   fontWeight: FontWeight.bold,
-              // ),
+                    );
+                  } catch (e) {
+                    print(e.toString());
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error: ${e.toString()}')),
+                    );
+                  }
+                },
+                // fillColor: ThemeColors.inverseBackgroundColor,
+                // textColor: ThemeColors.inverseTextColor,
+                // textDecoration: TextStyle(
+                //   fontSize: 20.0,
+                //   color: ThemeColors.inverseTextColor,
+                //   fontWeight: FontWeight.bold,
+                // ),
+              ),
             ),
           ],
         ),
@@ -174,14 +183,11 @@ class FormInput extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 5),
-          child: Text(
-            labelText,
-            // style: TextStyle(color: ThemeColors.primaryTextColor),
-          ),
+          child: Text(labelText, style: TextStyle(color: Colors.black)),
         ),
         InputBar(
           controller: controller,
-          // hintText: hintText,
+          hintText: hintText,
           showIcon: false,
           textInputType: textInputType,
         ),
@@ -200,12 +206,12 @@ class ChoiceDivider extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 28),
       child: Row(
         children: [
-          Expanded(child: Divider(color: Colors.grey, thickness: 1)),
+          Expanded(child: Divider(color: Colors.black, thickness: 1)),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 8.0),
-            child: Text("or", style: TextStyle(color: Colors.grey)),
+            child: Text("or", style: TextStyle(color: Colors.black)),
           ),
-          Expanded(child: Divider(color: Colors.grey, thickness: 1)),
+          Expanded(child: Divider(color: Colors.black, thickness: 1)),
         ],
       ),
     );

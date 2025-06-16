@@ -48,6 +48,24 @@ class AppTheme {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
     ),
 
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(
+        fontSize: 16.0,
+        fontWeight: FontWeight.w500,
+        color: Colors.black,
+      ),
+      bodyMedium: TextStyle(
+        fontSize: 14.0,
+        fontWeight: FontWeight.w400,
+        color: Colors.black,
+      ),
+      bodySmall: TextStyle(
+        fontSize: 12.0,
+        fontWeight: FontWeight.w300,
+        color: Colors.black45,
+      ),
+    ),
+
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: const Color(0xFF212121),

@@ -4,45 +4,44 @@ class InputBar extends StatelessWidget {
   final bool showIcon;
   final String? hintText;
   final TextEditingController? controller;
-  final Function(String)? onChanged;
-  final Function()? onIconPressed;
+  final ValueChanged<String>? onChanged;
+  final VoidCallback? onIconPressed;
   final IconData? icon;
   final TextInputType? textInputType;
+  final bool obscureText;
+  final int? maxLines;
+  final EdgeInsetsGeometry padding;
+
   const InputBar({
     super.key,
-    required this.showIcon,
+    this.showIcon = false,
     this.hintText,
     this.controller,
     this.onChanged,
     this.onIconPressed,
     this.icon,
     this.textInputType,
+    this.obscureText = false,
+    this.maxLines = 1,
+    this.padding = const EdgeInsets.symmetric(horizontal: 28.0),
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 0),
+      padding: padding,
       child: TextField(
-        autofocus: false,
-        onTapOutside: (event) {
-          if (!FocusScope.of(context).hasPrimaryFocus) {
-            FocusScope.of(context).unfocus();
-          }
-        },
-        onTap: () {
-          FocusScope.of(context).unfocus();
-        },
-        keyboardType: textInputType,
         controller: controller,
-        style: TextStyle(
-          fontSize: 14.0,
-          // color: ThemeColors.primaryTextColor,
+        onChanged: onChanged,
+        keyboardType: textInputType,
+        obscureText: obscureText,
+        maxLines: maxLines,
+        style: theme.textTheme.bodyLarge?.copyWith(
+          // fontSize: 14.0,
           fontWeight: FontWeight.w500,
         ),
         decoration: InputDecoration(
-          // fillColor: ThemeColors.primaryColor,
-          // focusColor: ThemeColors.primaryColor,
           filled: true,
           hintText: hintText,
           border: OutlineInputBorder(
@@ -50,13 +49,14 @@ class InputBar extends StatelessWidget {
             borderSide: BorderSide.none,
           ),
           suffixIcon:
-              showIcon
+              showIcon && icon != null
                   ? IconButton(
                     icon: Icon(icon, size: 23),
                     onPressed: onIconPressed,
                   )
                   : null,
         ),
+        onTapOutside: (_) => FocusScope.of(context).unfocus(),
       ),
     );
   }

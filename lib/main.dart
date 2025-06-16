@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:martian_climate_dashboard/pages/connection_page.dart';
 import 'package:martian_climate_dashboard/pages/home_page.dart';
 import 'package:martian_climate_dashboard/services/lg_service.dart';
+import 'package:martian_climate_dashboard/utils/routes.dart';
 import 'package:martian_climate_dashboard/utils/themedata.dart';
 import 'package:provider/provider.dart';
 
@@ -20,11 +21,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Mars Vision',
+      routes: routes(context),
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       debugShowCheckedModeBanner: false,
-      home: const ConnectPage(),
     );
   }
 }
