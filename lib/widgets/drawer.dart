@@ -32,6 +32,14 @@ class MCDDrawer extends StatelessWidget {
               Navigator.pushNamed(context, '/connect');
             },
           ),
+          ListTile(
+            textColor: Colors.black,
+            leading: const Icon(Icons.build_outlined),
+            title: Text('Tools'),
+            onTap: () {
+              Navigator.pushNamed(context, '/tools');
+            },
+          ),
         ],
       ),
     );
