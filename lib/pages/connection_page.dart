@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:martian_climate_dashboard/services/lg_service.dart';
 import 'package:martian_climate_dashboard/widgets/button.dart';
-import 'package:martian_climate_dashboard/widgets/drawer.dart';
 import 'package:martian_climate_dashboard/widgets/input.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';

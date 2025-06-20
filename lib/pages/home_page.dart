@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:martian_climate_dashboard/entities/api_entity.dart';
+import 'package:martian_climate_dashboard/services/api_service.dart';
 import 'package:martian_climate_dashboard/widgets/button.dart';
 import 'package:martian_climate_dashboard/widgets/check_box.dart';
 import 'package:martian_climate_dashboard/widgets/date_picker.dart';
@@ -104,6 +106,48 @@ class _HomePageState extends State<HomePage> {
             MCDButton(
               onPressed: () {
                 print('Visualize Data Pressed');
+                ApiService apiService = ApiService();
+                final apiEntity =
+                    ApiEntity()
+                      ..variable = "t"
+                      ..datekeyhtml = 1
+                      ..ls = 99.5
+                      ..localtime = 0.0
+                      ..year = 2025
+                      ..month = 6
+                      ..day = 20
+                      ..hours = 13
+                      ..minutes = 42
+                      ..seconds = 57
+                      ..julian = 2460847.0714930557
+                      ..martianyear = 38
+                      ..sol = 215
+                      ..latitude = "all"
+                      ..longitude = "all"
+                      ..altitude = 10.0
+                      ..zkey = 3
+                      ..spacecraft = "none"
+                      ..isfixedlt = "off"
+                      ..dust = "1"
+                      ..hrkey = 1
+                      ..averaging = "off"
+                      ..dpi = 80
+                      ..islog = "off"
+                      ..colorm = "jet"
+                      ..minval = ""
+                      ..maxval = ""
+                      ..proj = "cyl"
+                      ..palt = null
+                      ..plon = null
+                      ..plat = null;
+                apiService
+                    .fetchData(apiEntity)
+                    .then((data) {
+                      print('Data fetched successfully: $data');
+                    })
+                    .catchError((error) {
+                      print('Error fetching data: $error');
+                    });
               },
               text: 'Visualize Data',
             ),
