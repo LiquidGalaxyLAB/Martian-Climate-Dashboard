@@ -299,11 +299,11 @@ class KmlGenerationService {
   }
 }
 
-Future<void> main() async {
-  final service = KmlGenerationService(
-    input: await File("ASCII.txt").readAsString(),
-    interpFactor: 4,
-    skipFactor: 2,
-  );
-  await service.generateKml();
-}
+// Future<void> main() async {
+//   final service = KmlGenerationService(
+//     input: await File("ASCII.txt").readAsString(),
+//     interpFactor: 4,
+//     skipFactor: 2,
+//   );
+//   await service.generateKml();
+// }

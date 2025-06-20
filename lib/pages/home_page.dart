@@ -1,11 +1,16 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:martian_climate_dashboard/entities/api_entity.dart';
 import 'package:martian_climate_dashboard/services/api_service.dart';
+import 'package:martian_climate_dashboard/services/kml_generatation_service.dart';
+import 'package:martian_climate_dashboard/services/lg_service.dart';
 import 'package:martian_climate_dashboard/widgets/button.dart';
 import 'package:martian_climate_dashboard/widgets/check_box.dart';
 import 'package:martian_climate_dashboard/widgets/date_picker.dart';
 import 'package:martian_climate_dashboard/widgets/drawer.dart';
 import 'package:martian_climate_dashboard/widgets/parameter_picker.dart';
+import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -104,7 +109,7 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
             MCDButton(
-              onPressed: () {
+              onPressed: () async {
                 print('Visualize Data Pressed');
                 ApiService apiService = ApiService();
                 final apiEntity =
@@ -140,14 +145,30 @@ class _HomePageState extends State<HomePage> {
                       ..palt = null
                       ..plon = null
                       ..plat = null;
-                apiService
-                    .fetchData(apiEntity)
-                    .then((data) {
-                      print('Data fetched successfully: $data');
-                    })
-                    .catchError((error) {
-                      print('Error fetching data: $error');
-                    });
+                String data = "";
+                data = await apiService.fetchData(apiEntity);
+
+                final service = KmlGenerationService(
+                  input: data,
+                  interpFactor: 4,
+                  skipFactor: 2,
+                );
+                LgService lgService = Provider.of<LgService>(
+                  context,
+                  listen: false,
+                );
+
+                String kml = await service.generateKml();
+                await lgService.sendFile(
+                  '/var/www/html/heatmap.kml',
+                  (utf8.encode(kml)),
+                );
+
+                await lgService.execCommand(
+                  'echo "http://lg1:81/heatmap.kml" > /var/www/html/kmls.txt',
+                );
+
+                print(kml);
               },
               text: 'Visualize Data',
             ),
