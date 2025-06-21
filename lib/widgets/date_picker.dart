@@ -15,7 +15,7 @@ library;
 
 import 'package:flutter/material.dart';
 
-class DatePicker extends StatelessWidget {
+class DatePicker extends StatefulWidget {
   final void Function(DateTime)? onDateSelected;
   final bool enabled;
   const DatePicker({
@@ -25,12 +25,19 @@ class DatePicker extends StatelessWidget {
   });
 
   @override
+  State<DatePicker> createState() => _DatePickerState();
+}
+
+class _DatePickerState extends State<DatePicker> {
+  DateTime? _selectedDate;
+
+  @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.only(left: 12.0),
       decoration: BoxDecoration(
         color:
-            enabled
+            widget.enabled
                 ? Theme.of(context).primaryColor
                 : Theme.of(context).colorScheme.secondary,
         borderRadius: BorderRadius.circular(10),
@@ -39,9 +46,12 @@ class DatePicker extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            'MM/DD/YYYY',
+            // Display the selected date if available, otherwise show placeholder
+            _selectedDate != null
+                ? "${_selectedDate!.month.toString().padLeft(2, '0')}/${_selectedDate!.day.toString().padLeft(2, '0')}/${_selectedDate!.year}"
+                : 'MM/DD/YYYY',
             style: TextStyle(
-              fontWeight: enabled ? FontWeight.bold : FontWeight.normal,
+              fontWeight: widget.enabled ? FontWeight.bold : FontWeight.normal,
             ),
           ),
           SizedBox(width: 10.0),
@@ -49,15 +59,20 @@ class DatePicker extends StatelessWidget {
             icon: const Icon(Icons.calendar_month_outlined),
             padding: const EdgeInsets.all(0.0),
             onPressed: () async {
-              if (enabled) {
+              if (widget.enabled) {
                 DateTime? res = await showDatePicker(
                   context: context,
-                  initialDate: DateTime.now(),
+                  initialDate: _selectedDate ?? DateTime.now(),
                   firstDate: DateTime(2000),
                   lastDate: DateTime(2100),
                 );
-                if (res != null && onDateSelected != null) {
-                  onDateSelected!(res);
+                if (res != null) {
+                  setState(() {
+                    _selectedDate = res;
+                  });
+                  if (widget.onDateSelected != null) {
+                    widget.onDateSelected!(res);
+                  }
                 }
               }
             },
