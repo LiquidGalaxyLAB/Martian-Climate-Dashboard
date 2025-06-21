@@ -16,7 +16,15 @@ import 'package:flutter/material.dart';
 class MCDButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final String text;
-  const MCDButton({super.key, this.onPressed, required this.text});
+  final Color? color;
+  final Color? textColor;
+  const MCDButton({
+    super.key,
+    this.onPressed,
+    required this.text,
+    this.color,
+    this.textColor,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -34,8 +42,25 @@ class MCDButton extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8.0),
             ),
+            backgroundColor:
+                color ?? Theme.of(context).buttonTheme.colorScheme?.primary,
           ),
-          child: Text(text),
+          child: Text(
+            text,
+            style:
+                (textColor != null)
+                    ? TextStyle(
+                      color: textColor,
+                      fontSize: 17.0,
+                      fontWeight: FontWeight.w500,
+                    )
+                    : TextStyle(
+                      fontWeight: FontWeight.w500,
+
+                      fontSize: 16.0,
+                      color: textColor ?? Colors.white,
+                    ),
+          ),
         ),
       ),
     );

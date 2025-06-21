@@ -1,9 +1,16 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:martian_climate_dashboard/entities/api_entity.dart';
+import 'package:martian_climate_dashboard/services/api_service.dart';
+import 'package:martian_climate_dashboard/services/kml_generatation_service.dart';
+import 'package:martian_climate_dashboard/services/lg_service.dart';
 import 'package:martian_climate_dashboard/widgets/button.dart';
 import 'package:martian_climate_dashboard/widgets/check_box.dart';
 import 'package:martian_climate_dashboard/widgets/date_picker.dart';
 import 'package:martian_climate_dashboard/widgets/drawer.dart';
 import 'package:martian_climate_dashboard/widgets/parameter_picker.dart';
+import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -102,8 +109,66 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
             MCDButton(
-              onPressed: () {
+              onPressed: () async {
                 print('Visualize Data Pressed');
+                ApiService apiService = ApiService();
+                final apiEntity =
+                    ApiEntity()
+                      ..variable = "t"
+                      ..datekeyhtml = 1
+                      ..ls = 99.5
+                      ..localtime = 0.0
+                      ..year = 2025
+                      ..month = 6
+                      ..day = 20
+                      ..hours = 13
+                      ..minutes = 42
+                      ..seconds = 57
+                      ..julian = 2460847.0714930557
+                      ..martianyear = 38
+                      ..sol = 215
+                      ..latitude = "all"
+                      ..longitude = "all"
+                      ..altitude = 10.0
+                      ..zkey = 3
+                      ..spacecraft = "none"
+                      ..isfixedlt = "off"
+                      ..dust = "1"
+                      ..hrkey = 1
+                      ..averaging = "off"
+                      ..dpi = 80
+                      ..islog = "off"
+                      ..colorm = "jet"
+                      ..minval = ""
+                      ..maxval = ""
+                      ..proj = "cyl"
+                      ..palt = null
+                      ..plon = null
+                      ..plat = null;
+                String data = "";
+                data = await apiService.fetchData(apiEntity);
+
+                final service = KmlGenerationService(
+                  input: data,
+                  interpFactor: 4,
+                  skipFactor: 2,
+                );
+                LgService lgService = Provider.of<LgService>(
+                  context,
+                  listen: false,
+                );
+
+                String kml = await service.generateKml();
+                await lgService.sendFile(
+                  '/var/www/html/heatmap.kml',
+                  (utf8.encode(kml)),
+                );
+
+                await lgService.execCommand(
+                  'echo "http://lg1:81/heatmap.kml" > /var/www/html/kmls.txt',
+                );
+
+                print(kml);
               },
               text: 'Visualize Data',
             ),
