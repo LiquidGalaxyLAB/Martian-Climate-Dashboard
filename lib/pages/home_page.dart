@@ -22,6 +22,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   bool isDateRangeEnabled = false;
   bool isGridEnabled = false;
+  String? date;
 
   @override
   Widget build(BuildContext context) {
@@ -75,7 +76,7 @@ class _HomePageState extends State<HomePage> {
                     Padding(
                       padding: const EdgeInsets.only(left: 16),
                       child: DatePicker(
-                        onDateSelected: (p0) => print(p0.toIso8601String()),
+                        onDateSelected: (p0) => date = p0.toIso8601String(),
                         enabled: true,
                       ),
                     ),
@@ -117,13 +118,16 @@ class _HomePageState extends State<HomePage> {
                       ..variable = "t"
                       ..datekeyhtml = 1
                       ..ls = 99.5
-                      ..localtime = 0.0
-                      ..year = 2025
-                      ..month = 6
-                      ..day = 20
-                      ..hours = 13
-                      ..minutes = 42
-                      ..seconds = 57
+                      ..localtime =
+                          DateTime.parse(date!).hour +
+                          DateTime.parse(date!).minute / 60 +
+                          DateTime.parse(date!).second / 3600
+                      ..year = DateTime.parse(date!).year
+                      ..month = DateTime.parse(date!).month
+                      ..day = DateTime.parse(date!).day
+                      ..hours = DateTime.parse(date!).hour
+                      ..minutes = DateTime.parse(date!).minute
+                      ..seconds = DateTime.parse(date!).second
                       ..julian = 2460847.0714930557
                       ..martianyear = 38
                       ..sol = 215
