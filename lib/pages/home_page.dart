@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:martian_climate_dashboard/entities/api_entity.dart';
 import 'package:martian_climate_dashboard/services/api_service.dart';
 import 'package:martian_climate_dashboard/services/kml_generatation_service.dart';
@@ -178,6 +179,19 @@ class _HomePageState extends State<HomePage> {
                 await lgService.execCommand(
                   'echo "http://lg1:81/heatmap.kml" > /var/www/html/kmls.txt',
                 );
+                if (isGridEnabled) {
+                  String content = await rootBundle.loadString(
+                    'assets/kml/grid_overlay.kml',
+                  );
+                  await lgService.sendFile(
+                    '/var/www/html/grid.kml',
+                    utf8.encode(content),
+                  );
+
+                  await lgService.execCommand(
+                    'echo "http://lg1:81/grid.kml" >> /var/www/html/kmls.txt',
+                  );
+                }
 
                 print(kml);
               },
