@@ -5,6 +5,7 @@ import 'package:martian_climate_dashboard/entities/api_entity.dart';
 import 'package:martian_climate_dashboard/services/api_service.dart';
 import 'package:martian_climate_dashboard/services/kml_generatation_service.dart';
 import 'package:martian_climate_dashboard/services/lg_service.dart';
+import 'package:martian_climate_dashboard/utils/parameter_map.dart';
 import 'package:martian_climate_dashboard/widgets/button.dart';
 import 'package:martian_climate_dashboard/widgets/check_box.dart';
 import 'package:martian_climate_dashboard/widgets/date_picker.dart';
@@ -23,6 +24,7 @@ class _HomePageState extends State<HomePage> {
   bool isDateRangeEnabled = false;
   bool isGridEnabled = false;
   String? date;
+  String? selectedParameter;
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +50,11 @@ class _HomePageState extends State<HomePage> {
                   child: ParameterPicker(
                     hintText: 'Select Parameter',
                     selectedParameter: 'temperature',
+                    onChanged: (value) {
+                      setState(() {
+                        selectedParameter = value ?? 'temperature';
+                      });
+                    },
                   ),
                 ),
                 SizedBox(height: 10),
@@ -115,7 +122,7 @@ class _HomePageState extends State<HomePage> {
                 ApiService apiService = ApiService();
                 final apiEntity =
                     ApiEntity()
-                      ..variable = "t"
+                      ..variable = parameterMap[selectedParameter]
                       ..datekeyhtml = 1
                       ..ls = 99.5
                       ..localtime =
