@@ -64,6 +64,7 @@ class _HomePageState extends State<HomePage> {
                   child: ParameterPicker(
                     hintText: 'Mars Atmospheric Scenario',
                     selectedParameter: 'Martian Year 35',
+                    onChanged: (value) {},
                   ),
                 ),
                 SizedBox(height: 10),
