@@ -1,3 +1,27 @@
+/// A service class responsible for fetching data from a remote API.
+///
+/// The [ApiService] uses an [http.Client] to perform HTTP requests.
+/// It provides a method to fetch data based on an [ApiEntity], which
+/// constructs the appropriate URI for the request.
+///
+/// Example usage:
+/// ```dart
+/// final apiService = ApiService();
+/// final data = await apiService.fetchData(apiEntity);
+/// ```
+///
+/// Methods:
+/// - [fetchData]: Fetches data from the API using the provided [ApiEntity].
+///   It first retrieves a response, extracts a filename from the response body,
+///   constructs a new URI, and fetches the corresponding text file.
+/// - [_fetchTextFile]: Helper method to fetch the contents of a text file
+///   from a given URI.
+///
+/// Throws:
+/// - [Exception] if the HTTP request fails or if the expected data is not found
+///   in the response.
+library;
+
 import 'package:http/http.dart' as http;
 import 'package:martian_climate_dashboard/entities/api_entity.dart';
 

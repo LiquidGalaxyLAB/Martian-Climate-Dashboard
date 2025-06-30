@@ -1,4 +1,37 @@
-import 'dart:io';
+/// A service for generating KML (Keyhole Markup Language) files from ASCII grid data.
+///
+/// This service parses input ASCII data containing latitude, longitude, and parameter values,
+/// interpolates the grid to a higher resolution, and generates a KML file with colored polygons
+/// representing the parameter values.
+///
+/// The color of each polygon is determined by mapping the parameter value to a color gradient.
+/// The interpolation is performed using bilinear interpolation.
+///
+/// Parameters:
+/// - [input]: The ASCII grid data as a string.
+/// - [interpFactor]: The interpolation factor to increase grid resolution.
+/// - [skipFactor]: The factor to skip grid cells when generating polygons (controls density).
+///
+/// Example usage:
+/// ```dart
+/// final service = KmlGenerationService(
+///   input: await File("ASCII.txt").readAsString(),
+///   interpFactor: 4,
+///   skipFactor: 2,
+/// );
+/// final kmlString = await service.generateKml();
+/// ```
+///
+/// Throws:
+/// - [Exception] if the input data cannot be parsed or if there is a mismatch in grid dimensions.
+///
+/// Methods:
+/// - [generateKml]: Parses the input, interpolates the grid, and generates the KML string.
+/// - [interpolateGrid]: Performs bilinear interpolation on the grid data.
+/// - [bilinearInterpolate]: Computes the interpolated value at a given point.
+/// - [parameterToKmlColor]: Maps a parameter value to a KML color string.
+library;
+
 import 'dart:math';
 
 import 'package:martian_climate_dashboard/entities/grid_point.dart';

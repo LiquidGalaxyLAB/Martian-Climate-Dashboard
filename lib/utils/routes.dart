@@ -1,3 +1,5 @@
+// Defines the application's named routes and their corresponding widget builders.
+
 import 'package:flutter/material.dart';
 import 'package:martian_climate_dashboard/pages/connection_page.dart';
 import 'package:martian_climate_dashboard/pages/home_page.dart';
