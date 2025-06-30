@@ -13,11 +13,13 @@ import 'package:flutter/material.dart';
 class ParameterPicker extends StatelessWidget {
   final String selectedParameter;
   final String hintText;
+  final ValueChanged<String?>? onChanged;
 
   const ParameterPicker({
     super.key,
     required this.selectedParameter,
     required this.hintText,
+    this.onChanged,
   });
 
   @override
@@ -49,13 +51,13 @@ class ParameterPicker extends StatelessWidget {
           items: const [
             DropdownMenuItem(value: 'temperature', child: Text('Temperature')),
             DropdownMenuItem(value: 'pressure', child: Text('Pressure')),
-            DropdownMenuItem(value: 'wind_speed', child: Text('Wind Speed')),
+            DropdownMenuItem(value: 'density', child: Text('Density')),
             DropdownMenuItem(
               value: 'Martian Year 35',
               child: Text('Martian Year 35'),
             ),
           ],
-          onChanged: (value) {},
+          onChanged: onChanged,
         ),
       ],
     );

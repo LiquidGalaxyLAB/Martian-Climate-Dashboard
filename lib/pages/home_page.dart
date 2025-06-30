@@ -1,10 +1,12 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:martian_climate_dashboard/entities/api_entity.dart';
 import 'package:martian_climate_dashboard/services/api_service.dart';
 import 'package:martian_climate_dashboard/services/kml_generatation_service.dart';
 import 'package:martian_climate_dashboard/services/lg_service.dart';
+import 'package:martian_climate_dashboard/utils/parameter_map.dart';
 import 'package:martian_climate_dashboard/widgets/button.dart';
 import 'package:martian_climate_dashboard/widgets/check_box.dart';
 import 'package:martian_climate_dashboard/widgets/date_picker.dart';
@@ -22,6 +24,8 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   bool isDateRangeEnabled = false;
   bool isGridEnabled = false;
+  String? date;
+  String? selectedParameter;
 
   @override
   Widget build(BuildContext context) {
@@ -47,6 +51,11 @@ class _HomePageState extends State<HomePage> {
                   child: ParameterPicker(
                     hintText: 'Select Parameter',
                     selectedParameter: 'temperature',
+                    onChanged: (value) {
+                      setState(() {
+                        selectedParameter = value ?? 'temperature';
+                      });
+                    },
                   ),
                 ),
                 SizedBox(height: 10),
@@ -55,6 +64,7 @@ class _HomePageState extends State<HomePage> {
                   child: ParameterPicker(
                     hintText: 'Mars Atmospheric Scenario',
                     selectedParameter: 'Martian Year 35',
+                    onChanged: (value) {},
                   ),
                 ),
                 SizedBox(height: 10),
@@ -75,7 +85,7 @@ class _HomePageState extends State<HomePage> {
                     Padding(
                       padding: const EdgeInsets.only(left: 16),
                       child: DatePicker(
-                        onDateSelected: (p0) => print(p0.toIso8601String()),
+                        onDateSelected: (p0) => date = p0.toIso8601String(),
                         enabled: true,
                       ),
                     ),
@@ -114,16 +124,19 @@ class _HomePageState extends State<HomePage> {
                 ApiService apiService = ApiService();
                 final apiEntity =
                     ApiEntity()
-                      ..variable = "t"
+                      ..variable = parameterMap[selectedParameter]
                       ..datekeyhtml = 1
                       ..ls = 99.5
-                      ..localtime = 0.0
-                      ..year = 2025
-                      ..month = 6
-                      ..day = 20
-                      ..hours = 13
-                      ..minutes = 42
-                      ..seconds = 57
+                      ..localtime =
+                          DateTime.parse(date!).hour +
+                          DateTime.parse(date!).minute / 60 +
+                          DateTime.parse(date!).second / 3600
+                      ..year = DateTime.parse(date!).year
+                      ..month = DateTime.parse(date!).month
+                      ..day = DateTime.parse(date!).day
+                      ..hours = DateTime.parse(date!).hour
+                      ..minutes = DateTime.parse(date!).minute
+                      ..seconds = DateTime.parse(date!).second
                       ..julian = 2460847.0714930557
                       ..martianyear = 38
                       ..sol = 215
@@ -167,6 +180,19 @@ class _HomePageState extends State<HomePage> {
                 await lgService.execCommand(
                   'echo "http://lg1:81/heatmap.kml" > /var/www/html/kmls.txt',
                 );
+                if (isGridEnabled) {
+                  String content = await rootBundle.loadString(
+                    'assets/kml/grid_overlay.kml',
+                  );
+                  await lgService.sendFile(
+                    '/var/www/html/grid.kml',
+                    utf8.encode(content),
+                  );
+
+                  await lgService.execCommand(
+                    'echo "http://lg1:81/grid.kml" >> /var/www/html/kmls.txt',
+                  );
+                }
 
                 print(kml);
               },
