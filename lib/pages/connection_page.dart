@@ -67,6 +67,8 @@ class _ConnectPageState extends State<ConnectPage> {
                   //   Navigator.of(
                   //     context,
                   //   ).push(MaterialPageRoute(builder: (context) => QRPage()));
+                  print("Scan QR Code");
+                  Navigator.of(context).pushNamed('/scan');
                 },
                 text: "Scan Using QR",
                 color: Theme.of(context).primaryColor,
