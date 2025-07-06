@@ -100,12 +100,23 @@ class _HomePageState extends State<HomePage> {
                 ),
                 SizedBox(height: 20),
                 CheckBox(
-                  onChange:
-                      (value) => setState(() {
-                        isDateRangeEnabled = value ?? false;
-                      }),
+                  onChange: (value) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          "Date range visualization is currently not implemented.",
+                        ),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+
+                    setState(() {
+                      isDateRangeEnabled = value ?? false;
+                    });
+                  },
                   isChecked: isDateRangeEnabled,
                   text: "Visualize data over a date range",
+                  isEnabled: false,
                 ),
                 SizedBox(height: 7),
                 CheckBox(
@@ -115,6 +126,7 @@ class _HomePageState extends State<HomePage> {
                       }),
                   isChecked: isGridEnabled,
                   text: "Show grid lines",
+                  isEnabled: true,
                 ),
               ],
             ),
@@ -195,6 +207,14 @@ class _HomePageState extends State<HomePage> {
                 }
 
                 print(kml);
+
+                Navigator.of(context).pushNamed(
+                  '/visualization',
+                  // argume?nts: {
+                  // 'kmlUrl': 'http://lg1:81/heatmap.kml',
+                  // 'gridUrl': isGridEnabled ? 'http://lg1:81/grid.kml' : null,
+                  // },
+                );
               },
               text: 'Visualize Data',
             ),
