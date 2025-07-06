@@ -188,6 +188,7 @@ class _HomePageState extends State<HomePage> {
                   '/var/www/html/heatmap.kml',
                   (utf8.encode(kml)),
                 );
+                await lgService.changeToMars();
 
                 await lgService.execCommand(
                   'echo "http://lg1:81/heatmap.kml" > /var/www/html/kmls.txt',
@@ -205,6 +206,7 @@ class _HomePageState extends State<HomePage> {
                     'echo "http://lg1:81/grid.kml" >> /var/www/html/kmls.txt',
                   );
                 }
+                await lgService.sendLogos();
 
                 print(kml);
 

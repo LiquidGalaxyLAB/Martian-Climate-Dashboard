@@ -92,6 +92,35 @@ class LgService {
     }
   }
 
+  Future<void> sendLogos() async {
+    String file = '''
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+  <Document>
+    <name>SVT-logos</name>
+    <open>1</open>
+    <Folder>
+      <name>Logos</name>
+            <ScreenOverlay>
+        <name>LogoSO</name>
+        <Icon>
+          <href>https://i.imgur.com/p3uiWAy.png</href>
+        </Icon>
+        <color>ffffffff</color>
+        <overlayXY x="0.0" y="1.0" xunits="fraction" yunits="fraction"/>
+        <screenXY x="0.02" y="0.95" xunits="fraction" yunits="fraction"/>
+        <rotationXY x="0" y="0" xunits="fraction" yunits="fraction"/>
+        <size x="500.0" y="500.0" xunits="pixels" yunits="pixels"/>
+      </ScreenOverlay>
+    
+    </Folder>
+  </Document>
+</kml>
+  
+''';
+    await execCommand('echo "$file" > /var/www/html/kml/slave_3.kml');
+  }
+
   Future<LgService> sendFile(String remoteFilepath, Uint8List content) async {
     try {
       final socket = await SSHSocket.connect(host, port);
