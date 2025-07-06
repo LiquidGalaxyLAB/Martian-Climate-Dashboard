@@ -46,10 +46,12 @@ class LgService {
   String username = "lg";
   String password = "lg";
   int rigs = 3;
+  bool marsSelected = false;
 
   Future<bool> checkConnection() async {
     try {
       print('Connecting to $host:$port...');
+      await changeToMars();
       final socket = await SSHSocket.connect(
         host,
         port,
@@ -79,6 +81,15 @@ class LgService {
       print('Failed to send command to $host:$port, $e');
     }
     return this;
+  }
+
+  Future<void> changeToMars() async {
+    try {
+      await execCommand('echo "planet=mars" > /tmp/query.txt');
+      marsSelected = true;
+    } catch (e) {
+      print('Failed to change to Mars, $e');
+    }
   }
 
   Future<LgService> sendFile(String remoteFilepath, Uint8List content) async {
