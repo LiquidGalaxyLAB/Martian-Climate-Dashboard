@@ -172,15 +172,16 @@ class _HomePageState extends State<HomePage> {
                       ..plat = null;
                 String data = "";
                 data = await apiService.fetchData(apiEntity);
+                LgService lgService = Provider.of<LgService>(
+                  context,
+                  listen: false,
+                );
+                await lgService.sendLogos();
 
                 final service = KmlGenerationService(
                   input: data,
                   interpFactor: 4,
                   skipFactor: 2,
-                );
-                LgService lgService = Provider.of<LgService>(
-                  context,
-                  listen: false,
                 );
 
                 String kml = await service.generateKml();
@@ -205,8 +206,11 @@ class _HomePageState extends State<HomePage> {
                   await lgService.execCommand(
                     'echo "http://lg1:81/grid.kml" >> /var/www/html/kmls.txt',
                   );
+
+                  await lgService.execCommand(
+                    'echo "flytoview=<LookAt><longitude>${73.0}</longitude><latitude>${-13.0}</latitude><range>${3529400.3297285}</range><tilt>${0}</tilt><heading>${0}</heading><gx:altitudeMode>relativeToGround</gx:altitudeMode></LookAt>" > /tmp/query.txt',
+                  );
                 }
-                await lgService.sendLogos();
 
                 print(kml);
 

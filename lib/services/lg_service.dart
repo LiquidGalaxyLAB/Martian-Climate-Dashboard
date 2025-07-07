@@ -37,8 +37,10 @@
 /// - [clearKml]: Clears KML files on LG slaves, optionally keeping logos.
 library;
 
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:dartssh2/dartssh2.dart';
+import 'package:flutter/services.dart';
 
 class LgService {
   String host = "192.168.121.3";
@@ -93,32 +95,12 @@ class LgService {
   }
 
   Future<void> sendLogos() async {
-    String file = '''
-<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
-  <Document>
-    <name>SVT-logos</name>
-    <open>1</open>
-    <Folder>
-      <name>Logos</name>
-            <ScreenOverlay>
-        <name>LogoSO</name>
-        <Icon>
-          <href>https://i.imgur.com/p3uiWAy.png</href>
-        </Icon>
-        <color>ffffffff</color>
-        <overlayXY x="0.0" y="1.0" xunits="fraction" yunits="fraction"/>
-        <screenXY x="0.02" y="0.95" xunits="fraction" yunits="fraction"/>
-        <rotationXY x="0" y="0" xunits="fraction" yunits="fraction"/>
-        <size x="500.0" y="500.0" xunits="pixels" yunits="pixels"/>
-      </ScreenOverlay>
-    
-    </Folder>
-  </Document>
-</kml>
-  
-''';
-    await execCommand('echo "$file" > /var/www/html/kml/slave_3.kml');
+    print('Sending logos to Liquid Galaxy...');
+    String content = await rootBundle.loadString('assets/kml/logos.kml');
+    print(content);
+    // await sendFile('/var/www/html/kmls/slave_logo.kml', utf8.encode(content));
+
+    await execCommand('echo "$content" > /var/www/html/kml/slave_3.kml');
   }
 
   Future<LgService> sendFile(String remoteFilepath, Uint8List content) async {
