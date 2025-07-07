@@ -1,5 +1,46 @@
+/// A service class for interacting with a Liquid Galaxy system over SSH.
+///
+/// Provides methods to:
+/// - Check SSH connection to the LG master node.
+/// - Execute commands remotely on LG nodes.
+/// - Send files to LG nodes via SFTP.
+/// - Manage refresh intervals for KML files on LG slaves.
+/// - Reboot, relaunch, or shutdown the LG system.
+/// - Clear KML files on LG slaves.
+///
+/// The class uses the `dartssh2` package for SSH and SFTP operations.
+///
+/// Example usage:
+/// ```dart
+/// final lgService = LgService();
+/// await lgService.checkConnection();
+/// await lgService.execCommand('ls');
+/// ```
+///
+/// Properties:
+/// - [host]: The IP address of the LG master node.
+/// - [port]: The SSH port (default 22).
+/// - [username]: SSH username (default 'lg').
+/// - [password]: SSH password (default 'lg').
+/// - [rigs]: Number of LG nodes (default 3).
+///
+/// Methods:
+/// - [checkConnection]: Checks SSH connectivity to the master node.
+/// - [execCommand]: Executes a shell command on the master node.
+/// - [sendFile]: Sends a file to a remote path on the master node.
+/// - [getClient]: Returns an authenticated SSH client.
+/// - [setRefresh]: Enables periodic refresh for KML files on LG slaves.
+/// - [resetRefresh]: Disables periodic refresh for KML files on LG slaves.
+/// - [reboot]: Reboots all LG nodes.
+/// - [relaunch]: Restarts the display manager on all LG nodes.
+/// - [shutdown]: Powers off all LG nodes.
+/// - [clearKml]: Clears KML files on LG slaves, optionally keeping logos.
+library;
+
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:dartssh2/dartssh2.dart';
+import 'package:flutter/services.dart';
 
 class LgService {
   String host = "192.168.121.3";
@@ -7,10 +48,12 @@ class LgService {
   String username = "lg";
   String password = "lg";
   int rigs = 3;
+  bool marsSelected = false;
 
   Future<bool> checkConnection() async {
     try {
       print('Connecting to $host:$port...');
+      await changeToMars();
       final socket = await SSHSocket.connect(
         host,
         port,
@@ -40,6 +83,24 @@ class LgService {
       print('Failed to send command to $host:$port, $e');
     }
     return this;
+  }
+
+  Future<void> changeToMars() async {
+    try {
+      await execCommand('echo "planet=mars" > /tmp/query.txt');
+      marsSelected = true;
+    } catch (e) {
+      print('Failed to change to Mars, $e');
+    }
+  }
+
+  Future<void> sendLogos() async {
+    print('Sending logos to Liquid Galaxy...');
+    String content = await rootBundle.loadString('assets/kml/logos.kml');
+    print(content);
+    // await sendFile('/var/www/html/kmls/slave_logo.kml', utf8.encode(content));
+
+    await execCommand('echo "$content" > /var/www/html/kml/slave_3.kml');
   }
 
   Future<LgService> sendFile(String remoteFilepath, Uint8List content) async {

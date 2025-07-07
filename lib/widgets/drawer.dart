@@ -1,3 +1,13 @@
+/// A custom [Drawer] widget for the Mars Vision app.
+///
+/// This drawer provides navigation options for the application, including:
+/// - A header displaying the app name.
+/// - A "Connection" option that navigates to the '/connect' route.
+/// - A "Tools" option that navigates to the '/tools' route.
+///
+/// The drawer uses a simple [Column] layout and applies theming to the header text.
+library;
+
 import 'package:flutter/material.dart';
 
 class MCDDrawer extends StatelessWidget {

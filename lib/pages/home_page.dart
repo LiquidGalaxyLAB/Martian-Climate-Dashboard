@@ -100,12 +100,23 @@ class _HomePageState extends State<HomePage> {
                 ),
                 SizedBox(height: 20),
                 CheckBox(
-                  onChange:
-                      (value) => setState(() {
-                        isDateRangeEnabled = value ?? false;
-                      }),
+                  onChange: (value) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          "Date range visualization is currently not implemented.",
+                        ),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+
+                    setState(() {
+                      isDateRangeEnabled = value ?? false;
+                    });
+                  },
                   isChecked: isDateRangeEnabled,
                   text: "Visualize data over a date range",
+                  isEnabled: false,
                 ),
                 SizedBox(height: 7),
                 CheckBox(
@@ -115,6 +126,7 @@ class _HomePageState extends State<HomePage> {
                       }),
                   isChecked: isGridEnabled,
                   text: "Show grid lines",
+                  isEnabled: true,
                 ),
               ],
             ),
@@ -160,15 +172,16 @@ class _HomePageState extends State<HomePage> {
                       ..plat = null;
                 String data = "";
                 data = await apiService.fetchData(apiEntity);
+                LgService lgService = Provider.of<LgService>(
+                  context,
+                  listen: false,
+                );
+                await lgService.sendLogos();
 
                 final service = KmlGenerationService(
                   input: data,
                   interpFactor: 4,
                   skipFactor: 2,
-                );
-                LgService lgService = Provider.of<LgService>(
-                  context,
-                  listen: false,
                 );
 
                 String kml = await service.generateKml();
@@ -176,6 +189,7 @@ class _HomePageState extends State<HomePage> {
                   '/var/www/html/heatmap.kml',
                   (utf8.encode(kml)),
                 );
+                await lgService.changeToMars();
 
                 await lgService.execCommand(
                   'echo "http://lg1:81/heatmap.kml" > /var/www/html/kmls.txt',
@@ -192,9 +206,21 @@ class _HomePageState extends State<HomePage> {
                   await lgService.execCommand(
                     'echo "http://lg1:81/grid.kml" >> /var/www/html/kmls.txt',
                   );
+
+                  await lgService.execCommand(
+                    'echo "flytoview=<LookAt><longitude>${73.0}</longitude><latitude>${-13.0}</latitude><range>${3529400.3297285}</range><tilt>${0}</tilt><heading>${0}</heading><gx:altitudeMode>relativeToGround</gx:altitudeMode></LookAt>" > /tmp/query.txt',
+                  );
                 }
 
                 print(kml);
+
+                Navigator.of(context).pushNamed(
+                  '/visualization',
+                  // argume?nts: {
+                  // 'kmlUrl': 'http://lg1:81/heatmap.kml',
+                  // 'gridUrl': isGridEnabled ? 'http://lg1:81/grid.kml' : null,
+                  // },
+                );
               },
               text: 'Visualize Data',
             ),

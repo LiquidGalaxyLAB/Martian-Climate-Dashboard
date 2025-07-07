@@ -15,17 +15,22 @@ class CheckBox extends StatelessWidget {
   final ValueChanged<bool?> onChange;
   final bool isChecked;
   final String text;
+  final bool isEnabled;
   const CheckBox({
     super.key,
     required this.onChange,
     required this.text,
     required this.isChecked,
+    required this.isEnabled,
   });
 
   @override
   Widget build(BuildContext context) {
     return Row(
-      children: [Checkbox(value: isChecked, onChanged: onChange), Text(text)],
+      children: [
+        Checkbox(value: isEnabled ? isChecked : false, onChanged: onChange),
+        Text(text),
+      ],
     );
   }
 }
