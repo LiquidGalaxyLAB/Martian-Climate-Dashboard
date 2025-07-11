@@ -50,17 +50,28 @@ class LgService {
   int rigs = 3;
   bool marsSelected = false;
 
+  int get logoScreen {
+    if (rigs == 1) {
+      return 1;
+    }
+
+    // Gets the most left screen.
+    return (rigs / 2).floor() + 2;
+  }
+
   Future<bool> checkConnection() async {
     try {
-      print('Connecting to $host:$port...');
       await changeToMars();
+      // print('Connecting to $host:$port...');
       final socket = await SSHSocket.connect(
         host,
         port,
         timeout: Duration(seconds: 5),
       );
       SSHClient(socket, username: username, onPasswordRequest: () => password);
+      // await sendLogos();
       print('Connected to $host:$port');
+      // return true;
       return true;
     } catch (e) {
       print('Failed to connect to $host:$port, $e');
@@ -100,7 +111,9 @@ class LgService {
     print(content);
     // await sendFile('/var/www/html/kmls/slave_logo.kml', utf8.encode(content));
 
-    await execCommand('echo "$content" > /var/www/html/kml/slave_3.kml');
+    await execCommand(
+      'echo "$content" > /var/www/html/kml/slave_$logoScreen.kml',
+    );
   }
 
   Future<LgService> sendFile(String remoteFilepath, Uint8List content) async {
@@ -269,12 +282,12 @@ fi
 
     for (var i = 2; i <= rigs; i++) {
       String blankKml = '''
-<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
-  <Document>
-  </Document>
-</kml>
-''';
+    <?xml version="1.0" encoding="UTF-8"?>
+    <kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+      <Document>
+      </Document>
+    </kml>
+    ''';
       query += " && echo '$blankKml' > /var/www/html/kml/slave_$i.kml";
     }
 
