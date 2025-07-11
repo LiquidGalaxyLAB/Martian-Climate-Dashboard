@@ -14,12 +14,14 @@ class ParameterPicker extends StatelessWidget {
   final String selectedParameter;
   final String hintText;
   final ValueChanged<String?>? onChanged;
+  final Map<String, String> parameters;
 
   const ParameterPicker({
     super.key,
     required this.selectedParameter,
     required this.hintText,
     this.onChanged,
+    required this.parameters,
   });
 
   @override
@@ -48,15 +50,13 @@ class ParameterPicker extends StatelessWidget {
             color: Colors.black,
             fontWeight: FontWeight.w700,
           ),
-          items: const [
-            DropdownMenuItem(value: 'temperature', child: Text('Temperature')),
-            DropdownMenuItem(value: 'pressure', child: Text('Pressure')),
-            DropdownMenuItem(value: 'density', child: Text('Density')),
-            DropdownMenuItem(
-              value: 'Martian Year 35',
-              child: Text('Martian Year 35'),
-            ),
-          ],
+          items:
+              parameters.entries.map<DropdownMenuItem<String>>((entry) {
+                return DropdownMenuItem<String>(
+                  value: entry.key,
+                  child: Text(entry.value),
+                );
+              }).toList(),
           onChanged: onChanged,
         ),
       ],

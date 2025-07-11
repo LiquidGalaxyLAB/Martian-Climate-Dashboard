@@ -6,6 +6,7 @@ import 'package:martian_climate_dashboard/entities/api_entity.dart';
 import 'package:martian_climate_dashboard/services/api_service.dart';
 import 'package:martian_climate_dashboard/services/kml_generatation_service.dart';
 import 'package:martian_climate_dashboard/services/lg_service.dart';
+import 'package:martian_climate_dashboard/utils/atmos_map.dart';
 import 'package:martian_climate_dashboard/utils/parameter_map.dart';
 import 'package:martian_climate_dashboard/widgets/button.dart';
 import 'package:martian_climate_dashboard/widgets/check_box.dart';
@@ -26,6 +27,100 @@ class _HomePageState extends State<HomePage> {
   bool isGridEnabled = false;
   String? date;
   String? selectedParameter;
+
+  Future<void>? onSubmit() async {
+    print('Visualize Data Pressed');
+    if (date == null) {
+      // print(date! + " " + selectedParameter!);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a date.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+    ApiService apiService = ApiService();
+    final apiEntity =
+        ApiEntity()
+          ..variable = selectedParameter
+          ..datekeyhtml = 1
+          ..ls = 99.5
+          ..localtime =
+              DateTime.parse(date!).hour +
+              DateTime.parse(date!).minute / 60 +
+              DateTime.parse(date!).second / 3600
+          ..year = DateTime.parse(date!).year
+          ..month = DateTime.parse(date!).month
+          ..day = DateTime.parse(date!).day
+          ..hours = DateTime.parse(date!).hour
+          ..minutes = DateTime.parse(date!).minute
+          ..seconds = DateTime.parse(date!).second
+          ..julian = 2460847.0714930557
+          ..martianyear = 38
+          ..sol = 215
+          ..latitude = "all"
+          ..longitude = "all"
+          ..altitude = 10.0
+          ..zkey = 3
+          ..spacecraft = "none"
+          ..isfixedlt = "off"
+          ..dust = "1"
+          ..hrkey = 1
+          ..averaging = "off"
+          ..dpi = 80
+          ..islog = "off"
+          ..colorm = "jet"
+          ..minval = ""
+          ..maxval = ""
+          ..proj = "cyl"
+          ..palt = null
+          ..plon = null
+          ..plat = null;
+    String data = "";
+    data = await apiService.fetchData(apiEntity);
+    LgService lgService = Provider.of<LgService>(context, listen: false);
+    await lgService.sendLogos();
+
+    final service = KmlGenerationService(
+      input: data,
+      interpFactor: 4,
+      skipFactor: 2,
+    );
+
+    String kml = await service.generateKml();
+    await lgService.sendFile('/var/www/html/heatmap.kml', (utf8.encode(kml)));
+    await lgService.changeToMars();
+
+    await lgService.execCommand(
+      'echo "http://lg1:81/heatmap.kml" > /var/www/html/kmls.txt',
+    );
+    if (isGridEnabled) {
+      String content = await rootBundle.loadString(
+        'assets/kml/grid_overlay.kml',
+      );
+      await lgService.sendFile('/var/www/html/grid.kml', utf8.encode(content));
+
+      await lgService.execCommand(
+        'echo "http://lg1:81/grid.kml" >> /var/www/html/kmls.txt',
+      );
+
+      await lgService.execCommand(
+        'echo "flytoview=<LookAt><longitude>${73.0}</longitude><latitude>${-13.0}</latitude><range>${3529400.3297285}</range><tilt>${0}</tilt><heading>${0}</heading><gx:altitudeMode>relativeToGround</gx:altitudeMode></LookAt>" > /tmp/query.txt',
+      );
+    }
+
+    print(kml);
+
+    Navigator.of(context).pushNamed(
+      '/visualization',
+      // argume?nts: {
+      // 'kmlUrl': 'http://lg1:81/heatmap.kml',
+      // 'gridUrl': isGridEnabled ? 'http://lg1:81/grid.kml' : null,
+      // },
+    );
+    // return null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +145,8 @@ class _HomePageState extends State<HomePage> {
                   padding: const EdgeInsets.symmetric(horizontal: 13.0),
                   child: ParameterPicker(
                     hintText: 'Select Parameter',
-                    selectedParameter: 'temperature',
+                    selectedParameter: 't',
+                    parameters: parameterMap,
                     onChanged: (value) {
                       setState(() {
                         selectedParameter = value ?? 'temperature';
@@ -64,6 +160,7 @@ class _HomePageState extends State<HomePage> {
                   child: ParameterPicker(
                     hintText: 'Mars Atmospheric Scenario',
                     selectedParameter: 'Martian Year 35',
+                    parameters: atmosMap,
                     onChanged: (value) {},
                   ),
                 ),
@@ -85,7 +182,10 @@ class _HomePageState extends State<HomePage> {
                     Padding(
                       padding: const EdgeInsets.only(left: 16),
                       child: DatePicker(
-                        onDateSelected: (p0) => date = p0.toIso8601String(),
+                        onDateSelected:
+                            (p0) => setState(() {
+                              date = p0.toIso8601String();
+                            }),
                         enabled: true,
                       ),
                     ),
@@ -132,95 +232,7 @@ class _HomePageState extends State<HomePage> {
             ),
             MCDButton(
               onPressed: () async {
-                print('Visualize Data Pressed');
-                ApiService apiService = ApiService();
-                final apiEntity =
-                    ApiEntity()
-                      ..variable = parameterMap[selectedParameter]
-                      ..datekeyhtml = 1
-                      ..ls = 99.5
-                      ..localtime =
-                          DateTime.parse(date!).hour +
-                          DateTime.parse(date!).minute / 60 +
-                          DateTime.parse(date!).second / 3600
-                      ..year = DateTime.parse(date!).year
-                      ..month = DateTime.parse(date!).month
-                      ..day = DateTime.parse(date!).day
-                      ..hours = DateTime.parse(date!).hour
-                      ..minutes = DateTime.parse(date!).minute
-                      ..seconds = DateTime.parse(date!).second
-                      ..julian = 2460847.0714930557
-                      ..martianyear = 38
-                      ..sol = 215
-                      ..latitude = "all"
-                      ..longitude = "all"
-                      ..altitude = 10.0
-                      ..zkey = 3
-                      ..spacecraft = "none"
-                      ..isfixedlt = "off"
-                      ..dust = "1"
-                      ..hrkey = 1
-                      ..averaging = "off"
-                      ..dpi = 80
-                      ..islog = "off"
-                      ..colorm = "jet"
-                      ..minval = ""
-                      ..maxval = ""
-                      ..proj = "cyl"
-                      ..palt = null
-                      ..plon = null
-                      ..plat = null;
-                String data = "";
-                data = await apiService.fetchData(apiEntity);
-                LgService lgService = Provider.of<LgService>(
-                  context,
-                  listen: false,
-                );
-                await lgService.sendLogos();
-
-                final service = KmlGenerationService(
-                  input: data,
-                  interpFactor: 4,
-                  skipFactor: 2,
-                );
-
-                String kml = await service.generateKml();
-                await lgService.sendFile(
-                  '/var/www/html/heatmap.kml',
-                  (utf8.encode(kml)),
-                );
-                await lgService.changeToMars();
-
-                await lgService.execCommand(
-                  'echo "http://lg1:81/heatmap.kml" > /var/www/html/kmls.txt',
-                );
-                if (isGridEnabled) {
-                  String content = await rootBundle.loadString(
-                    'assets/kml/grid_overlay.kml',
-                  );
-                  await lgService.sendFile(
-                    '/var/www/html/grid.kml',
-                    utf8.encode(content),
-                  );
-
-                  await lgService.execCommand(
-                    'echo "http://lg1:81/grid.kml" >> /var/www/html/kmls.txt',
-                  );
-
-                  await lgService.execCommand(
-                    'echo "flytoview=<LookAt><longitude>${73.0}</longitude><latitude>${-13.0}</latitude><range>${3529400.3297285}</range><tilt>${0}</tilt><heading>${0}</heading><gx:altitudeMode>relativeToGround</gx:altitudeMode></LookAt>" > /tmp/query.txt',
-                  );
-                }
-
-                print(kml);
-
-                Navigator.of(context).pushNamed(
-                  '/visualization',
-                  // argume?nts: {
-                  // 'kmlUrl': 'http://lg1:81/heatmap.kml',
-                  // 'gridUrl': isGridEnabled ? 'http://lg1:81/grid.kml' : null,
-                  // },
-                );
+                await onSubmit();
               },
               text: 'Visualize Data',
             ),
