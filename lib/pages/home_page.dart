@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'dart:math';
 
+import 'package:async/async.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:martian_climate_dashboard/entities/api_entity.dart';
@@ -7,6 +9,7 @@ import 'package:martian_climate_dashboard/services/api_service.dart';
 import 'package:martian_climate_dashboard/services/kml_generatation_service.dart';
 import 'package:martian_climate_dashboard/services/lg_service.dart';
 import 'package:martian_climate_dashboard/utils/atmos_map.dart';
+import 'package:martian_climate_dashboard/utils/mars_facts.dart';
 import 'package:martian_climate_dashboard/utils/parameter_map.dart';
 import 'package:martian_climate_dashboard/widgets/button.dart';
 import 'package:martian_climate_dashboard/widgets/check_box.dart';
@@ -25,10 +28,31 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   bool isDateRangeEnabled = false;
   bool isGridEnabled = false;
+  bool _isLoading = false;
   String? date;
   String? selectedParameter;
+  final random = Random();
+  CancelableOperation<void>? _operation;
 
-  Future<void>? onSubmit() async {
+  void startCancelableTask() {
+    _operation = CancelableOperation.fromFuture(
+      onSubmit(),
+      onCancel: () {
+        setState(() {
+          _isLoading = false;
+        });
+      },
+    );
+  }
+
+  void stopTask() async {
+    await _operation?.cancel();
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  Future<void> onSubmit() async {
     print('Visualize Data Pressed');
     if (date == null) {
       // print(date! + " " + selectedParameter!);
@@ -40,6 +64,9 @@ class _HomePageState extends State<HomePage> {
       );
       return;
     }
+    setState(() {
+      _isLoading = true;
+    });
     ApiService apiService = ApiService();
     final apiEntity =
         ApiEntity()
@@ -111,14 +138,10 @@ class _HomePageState extends State<HomePage> {
     }
 
     print(kml);
+    _isLoading = false;
+    setState(() {});
 
-    Navigator.of(context).pushNamed(
-      '/visualization',
-      // argume?nts: {
-      // 'kmlUrl': 'http://lg1:81/heatmap.kml',
-      // 'gridUrl': isGridEnabled ? 'http://lg1:81/grid.kml' : null,
-      // },
-    );
+    Navigator.of(context).pushNamed('/visualization');
     // return null;
   }
 
@@ -127,117 +150,197 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(title: const Text('Mars Vision')),
       drawer: MCDDrawer(),
-      body: Padding(
-        padding: const EdgeInsets.all(15.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                const Text(
-                  "Visualize Mars Conditions",
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
-                ),
-                SizedBox(height: 10),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 13.0),
-                  child: ParameterPicker(
-                    hintText: 'Select Parameter',
-                    selectedParameter: 't',
-                    parameters: parameterMap,
-                    onChanged: (value) {
-                      setState(() {
-                        selectedParameter = value ?? 'temperature';
-                      });
-                    },
-                  ),
-                ),
-                SizedBox(height: 10),
-                Padding(
-                  padding: const EdgeInsets.all(13.0),
-                  child: ParameterPicker(
-                    hintText: 'Mars Atmospheric Scenario',
-                    selectedParameter: 'Martian Year 35',
-                    parameters: atmosMap,
-                    onChanged: (value) {},
-                  ),
-                ),
-                SizedBox(height: 10),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 13.0),
-                  child: Text(
-                    'Date Range',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.normal,
-                    ),
-                  ),
-                ),
-                SizedBox(height: 3),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(left: 16),
-                      child: DatePicker(
-                        onDateSelected:
-                            (p0) => setState(() {
-                              date = p0.toIso8601String();
-                            }),
-                        enabled: true,
+      body: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(15.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    const Text(
+                      "Visualize Mars Conditions",
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
+                    SizedBox(height: 10),
                     Padding(
-                      padding: const EdgeInsets.only(right: 16),
-                      child: DatePicker(
-                        onDateSelected: (p0) => print(p0.toIso8601String()),
-                        enabled: false,
+                      padding: const EdgeInsets.symmetric(horizontal: 13.0),
+                      child: ParameterPicker(
+                        hintText: 'Select Parameter',
+                        selectedParameter: 't',
+                        parameters: parameterMap,
+                        onChanged: (value) {
+                          setState(() {
+                            selectedParameter = value ?? 'temperature';
+                          });
+                        },
                       ),
+                    ),
+                    SizedBox(height: 10),
+                    Padding(
+                      padding: const EdgeInsets.all(13.0),
+                      child: ParameterPicker(
+                        hintText: 'Mars Atmospheric Scenario',
+                        selectedParameter: 'Martian Year 35',
+                        parameters: atmosMap,
+                        onChanged: (value) {},
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 13.0),
+                      child: Text(
+                        'Date Range',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.normal,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 3),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(left: 16),
+                          child: DatePicker(
+                            onDateSelected:
+                                (p0) => setState(() {
+                                  date = p0.toIso8601String();
+                                }),
+                            enabled: true,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(right: 16),
+                          child: DatePicker(
+                            onDateSelected: (p0) => print(p0.toIso8601String()),
+                            enabled: false,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 20),
+                    CheckBox(
+                      onChange: (value) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              "Date range visualization is currently not implemented.",
+                            ),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+
+                        setState(() {
+                          isDateRangeEnabled = value ?? false;
+                        });
+                      },
+                      isChecked: isDateRangeEnabled,
+                      text: "Visualize data over a date range",
+                      isEnabled: false,
+                    ),
+                    SizedBox(height: 7),
+                    CheckBox(
+                      onChange:
+                          (value) => setState(() {
+                            isGridEnabled = value ?? false;
+                          }),
+                      isChecked: isGridEnabled,
+                      text: "Show grid lines",
+                      isEnabled: true,
                     ),
                   ],
                 ),
-                SizedBox(height: 20),
-                CheckBox(
-                  onChange: (value) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          "Date range visualization is currently not implemented.",
-                        ),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-
-                    setState(() {
-                      isDateRangeEnabled = value ?? false;
-                    });
+                MCDButton(
+                  onPressed: () {
+                    startCancelableTask();
                   },
-                  isChecked: isDateRangeEnabled,
-                  text: "Visualize data over a date range",
-                  isEnabled: false,
-                ),
-                SizedBox(height: 7),
-                CheckBox(
-                  onChange:
-                      (value) => setState(() {
-                        isGridEnabled = value ?? false;
-                      }),
-                  isChecked: isGridEnabled,
-                  text: "Show grid lines",
-                  isEnabled: true,
+                  text: 'Visualize Data',
                 ),
               ],
             ),
-            MCDButton(
-              onPressed: () async {
-                await onSubmit();
-              },
-              text: 'Visualize Data',
+          ),
+          if (_isLoading)
+            Container(
+              color: Colors.black.withOpacity(0.05),
+              width: double.infinity,
+              height: double.infinity,
+              child: Center(
+                child: FractionallySizedBox(
+                  widthFactor: 0.7,
+                  child: Card(
+                    elevation: 8,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 12.0,
+                        horizontal: 32.0,
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            width: 50,
+                            height: 50,
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Theme.of(context).primaryColor,
+                              ),
+                              strokeWidth: 5,
+                            ),
+                          ),
+                          SizedBox(height: 20),
+                          Text(
+                            'Generating Visualization...',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          Text(
+                            facts[random.nextInt(facts.length)],
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          SizedBox(height: 16),
+                          // TextButton(
+                          //   onPressed: () {
+                          //     setState(() {
+                          //       _isLoading = false;
+                          //     });
+                          //     stopTask();
+                          //   },
+                          //   style: TextButton.styleFrom(
+                          //     foregroundColor: Colors.grey[700],
+                          //   ),
+                          //   child: const Text(
+                          //     'Cancel',
+                          //     style: TextStyle(
+                          //       fontSize: 14,
+                          //       fontWeight: FontWeight.w500,
+                          //     ),
+                          //   ),
+                          // ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }

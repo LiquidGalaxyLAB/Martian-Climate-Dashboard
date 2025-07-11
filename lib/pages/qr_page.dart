@@ -45,7 +45,7 @@ class _QRPageState extends State<QRPage> {
 
         await setPrefs(lgService);
         if (await lgService.checkConnection()) {
-          Navigator.of(context).popUntil((ModalRoute.withName('/')));
+          Navigator.of(context).popUntil((ModalRoute.withName('/home')));
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Connected to ${lgService.host}')),
           );
