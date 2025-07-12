@@ -2,7 +2,7 @@ name: martian_climate_dashboard
 description: "Martian Climate Dashboard is a Flutter application for visualizing Martian climate data, including temperature, pressure, and other atmospheric parameters. The app supports data interpolation, AI insights, and interactive visualizations."
 
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
-version: 1.0.0+4
+version: 1.0.1+2
 
 environment:
   sdk: ^3.7.2
@@ -17,6 +17,8 @@ dependencies:
   dartssh2: ^2.12.0
   shared_preferences: ^2.5.3
   mobile_scanner: ^7.0.1
+  flutter_native_splash: ^2.4.6
+  async: ^2.12.0
   
 dev_dependencies:
   flutter_test:
@@ -33,4 +35,12 @@ flutter:
   assets:
     - assets/
     - assets/kml/
+
+flutter_native_splash:
+  color: "#ffffff"  
+  image: assets/Logos.png
+  android: true
+  ios: false
+  web: false
+
 

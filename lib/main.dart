@@ -24,7 +24,7 @@ class MyApp extends StatelessWidget {
       title: 'Mars Vision',
       routes: routes(context),
       theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
+      // darkTheme: AppTheme.darkTheme,
       debugShowCheckedModeBanner: false,
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:martian_climate_dashboard/services/lg_service.dart';
 import 'package:martian_climate_dashboard/widgets/button.dart';
 import 'package:martian_climate_dashboard/widgets/input.dart';
@@ -139,6 +140,12 @@ class _ConnectPageState extends State<ConnectPage> {
                           // style: TextStyle(color: ThemeColors.primaryTextColor),
                         ),
                       ),
+                    );
+                    String logo = await rootBundle.loadString(
+                      'assets/kml/logos.kml',
+                    );
+                    await lgService.execCommand(
+                      "echo '$logo' > /var/www/html/kml/slave_${lgService.logoScreen}.kml",
                     );
                   } catch (e) {
                     print(e.toString());
