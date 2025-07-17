@@ -52,6 +52,14 @@ class MCDDrawer extends StatelessWidget {
           ),
           ListTile(
             textColor: Colors.black,
+            leading: const Icon(Icons.code_outlined),
+            title: Text('API Key'),
+            onTap: () {
+              Navigator.pushNamed(context, '/apiKey');
+            },
+          ),
+          ListTile(
+            textColor: Colors.black,
             leading: const Icon(Icons.info_outline),
             title: Text('About'),
             onTap: () {

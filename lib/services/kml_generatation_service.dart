@@ -36,6 +36,7 @@ import 'dart:math';
 
 import 'package:martian_climate_dashboard/entities/grid_point.dart';
 import 'package:martian_climate_dashboard/entities/interpolated_grid.dart';
+import 'package:martian_climate_dashboard/enums/colomap.dart';
 
 class KmlGenerationService {
   final String input;
@@ -269,14 +270,8 @@ class KmlGenerationService {
   ) {
     final ratio = (parameterValue - minP) / deltaP;
 
-    final stops = <double, List<int>>{
-      // 0.2: [0, 0, 0],
-      0.2: [255, 200, 0],
-      0.5: [255, 150, 0],
-      0.8: [255, 50, 0],
-      1.0: [255, 0, 0],
-      0.0: [255, 255, 0],
-    };
+    final Map<double, List<int>> stops =
+        colorMapData[ColorMap.yelloworangered]!;
 
     double leftStop = 0.0;
     List<int> leftColor = [0, 0, 0];

@@ -1,12 +1,36 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:martian_climate_dashboard/entities/state_entity.dart';
+import 'package:martian_climate_dashboard/services/kml_service.dart';
+import 'package:martian_climate_dashboard/services/lg_service.dart';
+import 'package:martian_climate_dashboard/utils/parameter_map.dart';
 import 'package:martian_climate_dashboard/widgets/drawer.dart';
+import 'package:provider/provider.dart';
 
 class VisualizationPage extends StatelessWidget {
   const VisualizationPage({super.key});
-
   @override
   Widget build(BuildContext context) {
+    StateEntity stateEntity = Provider.of<StateEntity>(context, listen: false);
     return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        tooltip: "orbit",
+        onPressed: () async {
+          LgService lgService = Provider.of<LgService>(context, listen: false);
+          String kmlData = KmlService.generateOrbit(3000);
+          await lgService.sendFile(
+            '/var/www/html/orbit.kml',
+            (utf8.encode(kmlData)),
+          );
+          print(kmlData);
+          await lgService.execCommand(
+            'echo "http://lg1:81/Orbit.kml" >> /var/www/html/kmls.txt',
+          );
+          await lgService.execCommand('echo "playtour=Orbit" > /tmp/query.txt');
+        },
+        child: const Icon(Icons.track_changes),
+      ),
       drawer: MCDDrawer(),
       appBar: AppBar(
         title: const Text('Mars Vision'),
@@ -14,15 +38,36 @@ class VisualizationPage extends StatelessWidget {
           IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
         ],
       ),
-      body: Center(
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: const <Widget>[
-            Text('Visualization Page', style: TextStyle(fontSize: 24)),
-            SizedBox(height: 20),
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
             Text(
-              'This page will present a summary of the KML data and enable answering questions using AI.',
-              textAlign: TextAlign.center,
+              '${parameterMap[stateEntity.param]} Visualization',
+              style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+            ),
+            // SizedBox(height: 20),
+            Text(
+              (() {
+                final monthNames = [
+                  'January',
+                  'February',
+                  'March',
+                  'April',
+                  'May',
+                  'June',
+                  'July',
+                  'August',
+                  'September',
+                  'October',
+                  'November',
+                  'December',
+                ];
+                return '${monthNames[stateEntity.date!.month - 1]} ${stateEntity.date!.day}, ${stateEntity.date!.year}';
+              })(),
+              style: const TextStyle(fontSize: 16),
             ),
           ],
         ),

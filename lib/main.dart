@@ -1,6 +1,7 @@
 //    await sshConnection.sendCommand('echo \'planet=$planet\' > /tmp/query.txt');
 
 import 'package:flutter/material.dart';
+import 'package:martian_climate_dashboard/entities/state_entity.dart';
 import 'package:martian_climate_dashboard/services/lg_service.dart';
 import 'package:martian_climate_dashboard/utils/routes.dart';
 import 'package:martian_climate_dashboard/utils/themedata.dart';
@@ -9,7 +10,10 @@ import 'package:provider/provider.dart';
 void main() {
   runApp(
     MultiProvider(
-      providers: [Provider<LgService>(create: (_) => LgService())],
+      providers: [
+        Provider<LgService>(create: (_) => LgService()),
+        Provider<StateEntity>(create: (_) => StateEntity()),
+      ],
       child: const MyApp(),
     ),
   );

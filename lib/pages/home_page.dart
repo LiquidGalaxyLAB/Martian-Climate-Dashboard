@@ -5,6 +5,7 @@ import 'package:async/async.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:martian_climate_dashboard/entities/api_entity.dart';
+import 'package:martian_climate_dashboard/entities/state_entity.dart';
 import 'package:martian_climate_dashboard/services/api_service.dart';
 import 'package:martian_climate_dashboard/services/kml_generatation_service.dart';
 import 'package:martian_climate_dashboard/services/lg_service.dart';
@@ -67,6 +68,12 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _isLoading = true;
     });
+    StateEntity stateEntity = Provider.of<StateEntity>(context, listen: false);
+    stateEntity.param = selectedParameter ?? 't';
+    stateEntity.date = DateTime.parse(date!);
+    stateEntity.isGridEnabled = isGridEnabled;
+    stateEntity.dateRangeEnabled = isDateRangeEnabled;
+    stateEntity.atomsScenario = 'Martian Year 35';
     ApiService apiService = ApiService();
     final apiEntity =
         ApiEntity()
@@ -107,7 +114,7 @@ class _HomePageState extends State<HomePage> {
     String data = "";
     data = await apiService.fetchData(apiEntity);
     LgService lgService = Provider.of<LgService>(context, listen: false);
-    await lgService.sendLogos();
+    await lgService.checkConnection();
 
     final service = KmlGenerationService(
       input: data,
@@ -196,7 +203,7 @@ class _HomePageState extends State<HomePage> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 13.0),
                       child: Text(
-                        'Date Range',
+                        'Date',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.normal,

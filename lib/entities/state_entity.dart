@@ -1,14 +1,14 @@
-class HomeStateEntity {
-  String param;
+class StateEntity {
+  String? param;
   String? atomsScenario;
-  DateTime date;
+  DateTime? date;
   bool isGridEnabled;
   bool dateRangeEnabled;
 
-  HomeStateEntity({
-    required this.param,
+  StateEntity({
+    this.param = 't',
     this.atomsScenario,
-    required this.date,
+    this.date,
     this.isGridEnabled = false,
     this.dateRangeEnabled = false,
   });

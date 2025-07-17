@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:martian_climate_dashboard/pages/about_page.dart';
+import 'package:martian_climate_dashboard/pages/api_key.dart';
 import 'package:martian_climate_dashboard/pages/connection_page.dart';
 import 'package:martian_climate_dashboard/pages/home_page.dart';
 import 'package:martian_climate_dashboard/pages/qr_page.dart';
@@ -17,4 +18,5 @@ Map<String, WidgetBuilder> routes(context) => {
   '/scan': (context) => QRPage(),
   '/visualization': (context) => VisualizationPage(),
   '/about': (context) => const AboutPage(),
+  '/apiKey': (context) => const ApiKeyPage(),
 };

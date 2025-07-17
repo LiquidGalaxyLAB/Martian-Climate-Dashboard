@@ -37,8 +37,6 @@
 /// - [clearKml]: Clears KML files on LG slaves, optionally keeping logos.
 library;
 
-import 'dart:convert';
-import 'dart:typed_data';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/services.dart';
 
@@ -221,6 +219,9 @@ class LgService {
         await execCommand(
           'sshpass -p $pw ssh -t lg$i "echo $pw | sudo -S reboot"',
         );
+        await Future.delayed(Duration(seconds: 25));
+
+        await checkConnection();
       } catch (e) {
         // ignore: avoid_print
         print(e);
@@ -253,6 +254,8 @@ fi
           '"/home/$user/bin/lg-relaunch" > /home/$user/log.txt',
         );
         await execCommand(relaunchCommand);
+        await Future.delayed(Duration(seconds: 15));
+        await checkConnection();
       } catch (e) {
         // ignore: avoid_print
         print(e);
@@ -280,16 +283,16 @@ fi
     String query =
         'echo "exittour=true" > /tmp/query.txt && > /var/www/html/kmls.txt';
 
-    for (var i = 2; i <= rigs; i++) {
-      String blankKml = '''
-    <?xml version="1.0" encoding="UTF-8"?>
-    <kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
-      <Document>
-      </Document>
-    </kml>
-    ''';
-      query += " && echo '$blankKml' > /var/www/html/kml/slave_$i.kml";
-    }
+    // for (var i = 2; i <= rigs; i++) {
+    //   String blankKml = '''
+    // <?xml version="1.0" encoding="UTF-8"?>
+    // <kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+    //   <Document>
+    //   </Document>
+    // </kml>
+    // ''';
+    //   query += " && echo '$blankKml' > /var/www/html/kml/slave_$i.kml";
+    // }
 
     await execCommand(query);
   }
