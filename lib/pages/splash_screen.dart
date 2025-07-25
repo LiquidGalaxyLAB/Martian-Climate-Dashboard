@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:martian_climate_dashboard/services/lg_service.dart';
+import 'package:provider/provider.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -12,8 +14,13 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
 
-    Future.delayed(const Duration(seconds: 2), () {
+    Future.delayed(const Duration(seconds: 5), () {
       Navigator.pushReplacementNamed(context, '/home');
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      LgService lgService = Provider.of<LgService>(context, listen: false);
+      lgService.checkConnection();
     });
   }
 

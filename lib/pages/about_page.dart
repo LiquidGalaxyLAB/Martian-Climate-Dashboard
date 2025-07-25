@@ -44,17 +44,17 @@ class AboutPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     const Text(
-                      'Mentors:',
+                      'Mentors and Contributors:',
                       style: TextStyle(
                         fontSize: 20,
-                        fontWeight: FontWeight.normal,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                     const Text(
-                      'Víctor Pérez, Victor Carreras',
+                      'Thanks to my main mentor Victor Carreras and secondary mentor Víctor Pérez. And thanks to the team of the Liquid Galaxy LAB Lleida, Headquarters of the Liquid Galaxy project: Alba, Paula, Josep, Jordi, Oriol, Sharon, Alejandro, Marc, and admin Andreu, for their continuous support on my project. Info in www.liquidgalaxy.eu',
                       style: TextStyle(
                         fontSize: 22,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.normal,
                       ),
                       textAlign: TextAlign.center,
                     ),

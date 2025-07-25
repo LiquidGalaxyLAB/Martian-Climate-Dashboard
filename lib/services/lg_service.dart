@@ -59,7 +59,6 @@ class LgService {
 
   Future<bool> checkConnection() async {
     try {
-      await changeToMars();
       // print('Connecting to $host:$port...');
       final socket = await SSHSocket.connect(
         host,
@@ -67,7 +66,10 @@ class LgService {
         timeout: Duration(seconds: 5),
       );
       SSHClient(socket, username: username, onPasswordRequest: () => password);
-      // await sendLogos();
+
+      await clearKml();
+      await changeToMars();
+      await sendLogos();
       print('Connected to $host:$port');
       // return true;
       return true;
@@ -105,13 +107,8 @@ class LgService {
 
   Future<void> sendLogos() async {
     print('Sending logos to Liquid Galaxy...');
-    String content = await rootBundle.loadString('assets/kml/logos.kml');
-    print(content);
-    // await sendFile('/var/www/html/kmls/slave_logo.kml', utf8.encode(content));
-
-    await execCommand(
-      'echo "$content" > /var/www/html/kml/slave_$logoScreen.kml',
-    );
+    String logo = await rootBundle.loadString('assets/kml/logos.kml');
+    await execCommand("echo '$logo' > /var/www/html/kml/slave_$logoScreen.kml");
   }
 
   Future<LgService> sendFile(String remoteFilepath, Uint8List content) async {
@@ -219,9 +216,9 @@ class LgService {
         await execCommand(
           'sshpass -p $pw ssh -t lg$i "echo $pw | sudo -S reboot"',
         );
-        await Future.delayed(Duration(seconds: 25));
+        // await Future.delayed(Duration(seconds: 25));
 
-        await checkConnection();
+        // await checkConnection();
       } catch (e) {
         // ignore: avoid_print
         print(e);
@@ -250,17 +247,18 @@ else
   echo $pw | sudo -S service \\\${SERVICE} restart
 fi
 " && sshpass -p $pw ssh -x -t lg@lg$i "\$RELAUNCH_CMD\"""";
-        await execCommand(
-          '"/home/$user/bin/lg-relaunch" > /home/$user/log.txt',
-        );
+        // await execCommand(
+        //   '"/home/$user/bin/lg-relaunch" > /home/$user/log.txt',
+        // );
         await execCommand(relaunchCommand);
-        await Future.delayed(Duration(seconds: 15));
-        await checkConnection();
+        // await checkConnection();
       } catch (e) {
         // ignore: avoid_print
         print(e);
       }
     }
+    await Future.delayed(Duration(seconds: 15));
+    await changeToMars();
   }
 
   /// Shuts down the Liquid Galaxy system.
@@ -283,16 +281,16 @@ fi
     String query =
         'echo "exittour=true" > /tmp/query.txt && > /var/www/html/kmls.txt';
 
-    // for (var i = 2; i <= rigs; i++) {
-    //   String blankKml = '''
-    // <?xml version="1.0" encoding="UTF-8"?>
-    // <kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
-    //   <Document>
-    //   </Document>
-    // </kml>
-    // ''';
-    //   query += " && echo '$blankKml' > /var/www/html/kml/slave_$i.kml";
-    // }
+    for (var i = 2; i <= rigs; i++) {
+      String blankKml = '''
+    <?xml version="1.0" encoding="UTF-8"?>
+    <kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+      <Document>
+      </Document>
+    </kml>
+    ''';
+      query += " && echo '$blankKml' > /var/www/html/kml/slave_$i.kml";
+    }
 
     await execCommand(query);
   }

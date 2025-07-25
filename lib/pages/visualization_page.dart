@@ -2,14 +2,30 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:martian_climate_dashboard/entities/state_entity.dart';
+import 'package:martian_climate_dashboard/services/gemini_service.dart';
 import 'package:martian_climate_dashboard/services/kml_service.dart';
 import 'package:martian_climate_dashboard/services/lg_service.dart';
 import 'package:martian_climate_dashboard/utils/parameter_map.dart';
 import 'package:martian_climate_dashboard/widgets/drawer.dart';
 import 'package:provider/provider.dart';
 
-class VisualizationPage extends StatelessWidget {
+class VisualizationPage extends StatefulWidget {
   const VisualizationPage({super.key});
+
+  @override
+  State<VisualizationPage> createState() => _VisualizationPageState();
+}
+
+class _VisualizationPageState extends State<VisualizationPage> {
+  late GeminiService? geminiService;
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  Future<void> _loadData() async {}
+
   @override
   Widget build(BuildContext context) {
     StateEntity stateEntity = Provider.of<StateEntity>(context, listen: false);
