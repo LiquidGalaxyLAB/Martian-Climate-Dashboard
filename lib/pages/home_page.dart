@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:martian_climate_dashboard/entities/api_entity.dart';
 import 'package:martian_climate_dashboard/entities/state_entity.dart';
+import 'package:martian_climate_dashboard/pages/visualization_page.dart';
 import 'package:martian_climate_dashboard/services/api_service.dart';
 import 'package:martian_climate_dashboard/services/kml_generatation_service.dart';
 import 'package:martian_climate_dashboard/services/lg_service.dart';
@@ -70,15 +71,6 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         _isLoading = true;
       });
-      StateEntity stateEntity = Provider.of<StateEntity>(
-        context,
-        listen: false,
-      );
-      stateEntity.param = selectedParameter ?? 't';
-      stateEntity.date = DateTime.parse(date!);
-      stateEntity.isGridEnabled = isGridEnabled;
-      stateEntity.dateRangeEnabled = isDateRangeEnabled;
-      stateEntity.atomsScenario = 'Martian Year 35';
       ApiService apiService = ApiService();
       final apiEntity =
           ApiEntity()
@@ -115,11 +107,14 @@ class _HomePageState extends State<HomePage> {
             ..proj = "cyl"
             ..palt = null
             ..plon = null
-            ..plat = null;
+            ..plat = null
+            ..atomsScenario = 'Martian Year 35'
+            ..date = DateTime.parse(date!)
+            ..isGridEnabled = isGridEnabled
+            ..dateRangeEnabled = isDateRangeEnabled;
       String data = "";
-      print("bye");
       data = await apiService.fetchData(apiEntity);
-      print("bye");
+      print(apiService.imageBase64);
       LgService lgService = Provider.of<LgService>(context, listen: false);
       await lgService.checkConnection();
 
@@ -160,7 +155,15 @@ class _HomePageState extends State<HomePage> {
       _isLoading = false;
       setState(() {});
 
-      Navigator.of(context).pushNamed('/visualization');
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder:
+              (context) => VisualizationPage(
+                base64Image: apiService.imageBase64,
+                apiEntity: apiEntity,
+              ),
+        ),
+      );
       // return null;
     } catch (e) {
       print(e.toString());

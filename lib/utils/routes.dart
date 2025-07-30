@@ -16,7 +16,7 @@ Map<String, WidgetBuilder> routes(context) => {
   '/connect': (context) => ConnectPage(),
   '/tools': (context) => ToolsPage(),
   '/scan': (context) => QRPage(),
-  '/visualization': (context) => VisualizationPage(),
+  // '/visualization': (context) => Visualizat  ionPage(),
   '/about': (context) => const AboutPage(),
   '/apiKey': (context) => const ApiKeyPage(),
 };

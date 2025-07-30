@@ -29,6 +29,7 @@ import 'dart:convert';
 class ApiService {
   http.Client client;
   late String imageBase64;
+  late String globeImageBase64;
   ApiService({http.Client? client}) : client = client ?? http.Client();
 
   Future<String> fetchData(ApiEntity apiEntity) async {
@@ -69,5 +70,7 @@ class ApiService {
       throw Exception("Failed to fetch data");
     }
     return response.body;
+    // final image = imageBase64;
+    // return json.encode({...json.decode(response.body), "image": image});
   }
 }

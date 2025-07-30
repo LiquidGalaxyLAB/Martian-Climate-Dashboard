@@ -5,7 +5,7 @@ import 'package:martian_climate_dashboard/enums/role.dart';
 import 'package:martian_climate_dashboard/services/api_service.dart';
 
 class GeminiService {
-  final ApiService apiService;
+  // final ApiService apiService;
   final String imageContent;
   final String apiKey;
   http.Client client;
@@ -13,7 +13,7 @@ class GeminiService {
   GeminiService({
     required this.imageContent,
     required this.apiKey,
-    required this.apiService,
+    // required this.apiService,
     http.Client? client,
   }) : client = client ?? http.Client();
 
@@ -23,9 +23,26 @@ class GeminiService {
 
   List<Map<String, dynamic>> context = [];
 
-  Future<Map> callApi(String prompt) async {
-    final uri = Uri.parse(geminiUrl);
-    uri.queryParameters.addAll({'key': apiKey});
+  void dispose() {
+    client.close();
+    context.clear();
+  }
+
+  Future<Map> generateSummary() async {
+    print("object");
+    final response = await callApi("""
+      You are an expert mars scientist.
+      Analyze the image and provide a detailed summary of the Martian climate, including any visible features.
+      keep the summary concise and informative.
+      Use the image provided to you as a reference.
+      keep the summary in 50 words or less.
+      in the beginning always start with "Summary:" in bold.
+      """, addPrompt: false);
+    return response;
+  }
+
+  Future<Map> callApi(String prompt, {bool addPrompt = true}) async {
+    final uri = Uri.parse('$geminiUrl?key=$apiKey');
     final headers = {'Content-Type': 'application/json'};
     String payload = jsonEncode({
       "contents": [
@@ -41,17 +58,19 @@ class GeminiService {
         ...context,
       ],
     });
-    context.add({
-      "role": Role.user.name,
-      "parts": [
-        {"text": prompt},
-      ],
-    });
+    if (addPrompt) {
+      context.add({
+        "role": Role.user.name,
+        "parts": [
+          {"text": prompt},
+        ],
+      });
+    }
 
     final response = await client.post(uri, headers: headers, body: payload);
     if (response.statusCode != 200) {
       throw Exception(
-        "Failed to call Gemini API, status code: ${response.statusCode}",
+        "Failed to call Gemini API, status code: ${response.statusCode}, body: ${response.body}",
       );
     }
     final responseData = jsonDecode(response.body);
