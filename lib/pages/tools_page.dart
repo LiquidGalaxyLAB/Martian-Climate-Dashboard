@@ -94,13 +94,17 @@ class ToolsPage extends StatelessWidget {
                 ToolTile(
                   toolName: "Relaunch LG",
                   iconData: Icons.autorenew,
-                  onTap:
-                      () => _showConfirmationDialog(
-                        context,
-                        "Are you sure you want to relaunch?",
-                        "This will relaunch the system and may interupt any running visualizations.",
-                        lgService.relaunch,
-                      ),
+                  onTap: () async {
+                    await _showConfirmationDialog(
+                      context,
+                      "Are you sure you want to relaunch?",
+                      "This will relaunch the system and may interupt any running visualizations.",
+                      () async {
+                        await lgService.relaunch();
+                        await lgService.checkConnection();
+                      },
+                    );
+                  },
                 ),
                 ToolTile(
                   toolName: "Reboot LG",

@@ -10,10 +10,7 @@ import 'package:provider/provider.dart';
 void main() {
   runApp(
     MultiProvider(
-      providers: [
-        Provider<LgService>(create: (_) => LgService()),
-        Provider<StateEntity>(create: (_) => StateEntity()),
-      ],
+      providers: [Provider<LgService>(create: (_) => LgService())],
       child: const MyApp(),
     ),
   );

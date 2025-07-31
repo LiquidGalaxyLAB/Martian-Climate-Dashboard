@@ -101,6 +101,8 @@ class ApiEntity {
 
   DateTime? date;
 
+  DateTime? toDate;
+
   bool isGridEnabled;
 
   bool dateRangeEnabled;
@@ -139,6 +141,7 @@ class ApiEntity {
     this.plat,
     this.atomsScenario,
     this.date,
+    this.toDate,
     this.isGridEnabled = false,
     this.dateRangeEnabled = false,
   });
@@ -257,6 +260,43 @@ class ApiEntity {
       palt: json['palt']?.toDouble(),
       plon: json['plon']?.toDouble(),
       plat: json['plat']?.toDouble(),
+    );
+  }
+
+  ApiEntity copyWith({required DateTime date}) {
+    return ApiEntity(
+      variable: variable,
+      datekeyhtml: datekeyhtml,
+      ls: ls,
+      localtime: localtime,
+      year: year,
+      month: month,
+      day: day,
+      hours: hours,
+      minutes: minutes,
+      seconds: seconds,
+      julian: julian,
+      martianyear: martianyear,
+      sol: sol,
+      latitude: latitude,
+      longitude: longitude,
+      altitude: altitude,
+      zkey: zkey,
+      spacecraft: spacecraft,
+      isfixedlt: isfixedlt,
+      dust: dust,
+      hrkey: hrkey,
+      averaging: averaging,
+      dpi: dpi,
+      islog: islog,
+      colorm: colorm,
+      minval: minval,
+      maxval: maxval,
+      proj: proj,
+      palt: palt,
+      plon: plon,
+      plat: plat,
+      date: date,
     );
   }
 }

@@ -32,6 +32,7 @@ class _HomePageState extends State<HomePage> {
   bool isGridEnabled = false;
   bool _isLoading = false;
   String? date;
+  String? toDate;
   String? selectedParameter;
   final random = Random();
   CancelableOperation<void>? _operation;
@@ -58,11 +59,18 @@ class _HomePageState extends State<HomePage> {
     try {
       print('Visualize Data Pressed');
       if (date == null) {
-        print("hi");
-        // print(date! + " " + selectedParameter!);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Please select a date.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+        return;
+      }
+      if (isDateRangeEnabled && toDate == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please select a to date.'),
             duration: Duration(seconds: 2),
           ),
         );
@@ -111,7 +119,9 @@ class _HomePageState extends State<HomePage> {
             ..atomsScenario = 'Martian Year 35'
             ..date = DateTime.parse(date!)
             ..isGridEnabled = isGridEnabled
-            ..dateRangeEnabled = isDateRangeEnabled;
+            ..dateRangeEnabled = isDateRangeEnabled
+            ..toDate = isDateRangeEnabled ? DateTime.parse(toDate!) : null;
+      print(apiEntity.toJson());
       String data = "";
       data = await apiService.fetchData(apiEntity);
       print(apiService.imageBase64);
@@ -254,8 +264,11 @@ class _HomePageState extends State<HomePage> {
                         Padding(
                           padding: const EdgeInsets.only(right: 16),
                           child: DatePicker(
-                            onDateSelected: (p0) => print(p0.toIso8601String()),
-                            enabled: false,
+                            onDateSelected:
+                                (p0) => setState(() {
+                                  toDate = p0.toIso8601String();
+                                }),
+                            enabled: isDateRangeEnabled,
                           ),
                         ),
                       ],
@@ -263,22 +276,13 @@ class _HomePageState extends State<HomePage> {
                     SizedBox(height: 20),
                     CheckBox(
                       onChange: (value) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              "Date range visualization is currently not implemented.",
-                            ),
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-
                         setState(() {
                           isDateRangeEnabled = value ?? false;
                         });
                       },
                       isChecked: isDateRangeEnabled,
                       text: "Visualize data over a date range",
-                      isEnabled: false,
+                      isEnabled: true,
                     ),
                     SizedBox(height: 7),
                     CheckBox(
@@ -349,24 +353,6 @@ class _HomePageState extends State<HomePage> {
                             textAlign: TextAlign.center,
                           ),
                           SizedBox(height: 16),
-                          // TextButton(
-                          //   onPressed: () {
-                          //     setState(() {
-                          //       _isLoading = false;
-                          //     });
-                          //     stopTask();
-                          //   },
-                          //   style: TextButton.styleFrom(
-                          //     foregroundColor: Colors.grey[700],
-                          //   ),
-                          //   child: const Text(
-                          //     'Cancel',
-                          //     style: TextStyle(
-                          //       fontSize: 14,
-                          //       fontWeight: FontWeight.w500,
-                          //     ),
-                          //   ),
-                          // ),
                         ],
                       ),
                     ),
