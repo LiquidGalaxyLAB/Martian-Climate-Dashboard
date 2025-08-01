@@ -41,7 +41,12 @@ class GeminiService {
     return response;
   }
 
-  Future<Map> callApi(String prompt, {bool addPrompt = true}) async {
+  Future<Map> callApi(
+    String prompt, {
+    bool addPrompt = true,
+    String? image,
+  }) async {
+    print("Calling Gemini API with prompt: $prompt");
     final uri = Uri.parse('$geminiUrl?key=$apiKey');
     final headers = {'Content-Type': 'application/json'};
     String payload = jsonEncode({
@@ -51,7 +56,10 @@ class GeminiService {
           "parts": [
             {"text": prompt},
             {
-              "inline_data": {"mime_type": "image/jpeg", "data": imageContent},
+              "inline_data": {
+                "mime_type": "image/jpeg",
+                "data": image ?? imageContent,
+              },
             },
           ],
         },
@@ -66,7 +74,7 @@ class GeminiService {
         ],
       });
     }
-
+    print(context);
     final response = await client.post(uri, headers: headers, body: payload);
     if (response.statusCode != 200) {
       throw Exception(

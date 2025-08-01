@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:martian_climate_dashboard/entities/api_entity.dart';
 import 'package:martian_climate_dashboard/entities/saved_session.dart';
@@ -157,14 +156,15 @@ class _VisualizationPageState extends State<VisualizationPage> {
       msgController.clear();
     });
 
-    try {
-      final response = await geminiService.callApi(text);
-      setState(() {});
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
-    }
+    // try {
+    final response = await geminiService.callApi(text);
+    setState(() {});
+    // } catch (e) {
+    //   print(e);
+    //   ScaffoldMessenger.of(
+    //     context,
+    //   ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+    // }
   }
 
   Future<void> _stopOrbit() async {
@@ -322,38 +322,39 @@ class _VisualizationPageState extends State<VisualizationPage> {
                           final text = msgController.text;
                           if (text.trim().isEmpty) return;
                           _sendMessage(text);
+                          FocusScope.of(context).unfocus();
                         },
                       ),
                       PopupMenuButton<String>(
                         icon: const Icon(Icons.add),
                         tooltip: "More options",
                         offset: const Offset(0, -120),
-                        onSelected: (String result) {
-                          switch (result) {
-                            case 'save_session':
-                              SavedSession.saveSessions(
-                                SavedSession(
-                                  imageBase64: widget.base64Image,
-                                  apiEntity: widget.apiEntity,
-                                  context: geminiService.context,
-                                ),
-                              );
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Session Saved!')),
-                              );
-                              break;
-                            case 'generate_orbit':
-                              // Placeholder for generate orbit functionality
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Generate Orbit not implemented yet.',
-                                  ),
-                                ),
-                              );
-                              break;
-                          }
-                        },
+                        // onSelected: (String result) {
+                        //   switch (result) {
+                        //     case 'save_session':
+                        //       SavedSession.saveSessions(
+                        //         SavedSession(
+                        //           imageBase64: widget.base64Image,
+                        //           apiEntity: widget.apiEntity,
+                        //           context: geminiService.context,
+                        //         ),
+                        //       );
+                        //       ScaffoldMessenger.of(context).showSnackBar(
+                        //         const SnackBar(content: Text('Session Saved!')),
+                        //       );
+                        //       break;
+                        //     case 'generate_orbit':
+                        //       // Placeholder for generate orbit functionality
+                        //       ScaffoldMessenger.of(context).showSnackBar(
+                        //         const SnackBar(
+                        //           content: Text(
+                        //             'Generate Orbit not implemented yet.',
+                        //           ),
+                        //         ),
+                        //       );
+                        //       break;
+                        //   }
+                        // },
                         itemBuilder:
                             (BuildContext context) => <PopupMenuEntry<String>>[
                               PopupMenuItem<String>(

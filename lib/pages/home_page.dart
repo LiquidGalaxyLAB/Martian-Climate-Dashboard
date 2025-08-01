@@ -5,6 +5,7 @@ import 'package:async/async.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:martian_climate_dashboard/entities/api_entity.dart';
+import 'package:martian_climate_dashboard/entities/saved_session.dart';
 import 'package:martian_climate_dashboard/entities/state_entity.dart';
 import 'package:martian_climate_dashboard/pages/visualization_page.dart';
 import 'package:martian_climate_dashboard/services/api_service.dart';
@@ -122,6 +123,8 @@ class _HomePageState extends State<HomePage> {
             ..dateRangeEnabled = isDateRangeEnabled
             ..toDate = isDateRangeEnabled ? DateTime.parse(toDate!) : null;
       print(apiEntity.toJson());
+      List<SavedSession> sessions = await SavedSession.loadSessions();
+      print(sessions[0].toJson());
       String data = "";
       data = await apiService.fetchData(apiEntity);
       print(apiService.imageBase64);
