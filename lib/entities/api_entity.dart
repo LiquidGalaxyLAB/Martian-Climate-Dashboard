@@ -224,6 +224,7 @@ class ApiEntity {
       'palt': palt,
       'plon': plon,
       'plat': plat,
+      'date': date?.toIso8601String(),
     };
   }
 
@@ -260,6 +261,7 @@ class ApiEntity {
       palt: json['palt']?.toDouble(),
       plon: json['plon']?.toDouble(),
       plat: json['plat']?.toDouble(),
+      date: json['date'] != null ? DateTime.parse(json['date']) : null,
     );
   }
 
