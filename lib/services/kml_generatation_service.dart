@@ -42,11 +42,13 @@ class KmlGenerationService {
   final String input;
   final int interpFactor;
   final int skipFactor;
+  ColorMap colorMap;
 
   KmlGenerationService({
     required this.input,
     required this.interpFactor,
     required this.skipFactor,
+    required this.colorMap,
   });
 
   Future<String> generateKml() async {
@@ -270,8 +272,7 @@ class KmlGenerationService {
   ) {
     final ratio = (parameterValue - minP) / deltaP;
 
-    final Map<double, List<int>> stops =
-        colorMapData[ColorMap.yelloworangered]!;
+    final Map<double, List<int>> stops = colorMapData[colorMap]!;
 
     double leftStop = 0.0;
     List<int> leftColor = [0, 0, 0];

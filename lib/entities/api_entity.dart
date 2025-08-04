@@ -225,6 +225,10 @@ class ApiEntity {
       'plon': plon,
       'plat': plat,
       'date': date?.toIso8601String(),
+      'atomsScenario': atomsScenario,
+      'isGridEnabled': isGridEnabled,
+      'dateRangeEnabled': dateRangeEnabled,
+      'toDate': toDate?.toIso8601String(),
     };
   }
 
@@ -262,6 +266,10 @@ class ApiEntity {
       plon: json['plon']?.toDouble(),
       plat: json['plat']?.toDouble(),
       date: json['date'] != null ? DateTime.parse(json['date']) : null,
+      atomsScenario: json['atomsScenario'],
+      isGridEnabled: json['isGridEnabled'] ?? false,
+      dateRangeEnabled: json['dateRangeEnabled'] ?? false,
+      toDate: json['toDate'] != null ? DateTime.parse(json['toDate']) : null,
     );
   }
 
@@ -299,6 +307,10 @@ class ApiEntity {
       plon: plon,
       plat: plat,
       date: date,
+      atomsScenario: atomsScenario,
+      isGridEnabled: isGridEnabled,
+      dateRangeEnabled: dateRangeEnabled,
+      toDate: toDate,
     );
   }
 }

@@ -28,6 +28,10 @@ class GeminiService {
     context.clear();
   }
 
+  Future<void> clearContext() async {
+    context.clear();
+  }
+
   Future<Map> generateSummary() async {
     print("object");
     final response = await callApi("""

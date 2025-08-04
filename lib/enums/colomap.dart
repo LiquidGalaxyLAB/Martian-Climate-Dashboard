@@ -7,6 +7,7 @@ enum ColorMap {
   blackredyellow,
   bluewhitered,
   redwhiteblue,
+  redyellowgreenblue,
 }
 
 Map<ColorMap, Map<double, List<int>>> colorMapData = {
@@ -31,4 +32,13 @@ Map<ColorMap, Map<double, List<int>>> colorMapData = {
     1.0: [50, 50, 50],
     0.0: [255, 255, 255],
   },
+  ColorMap.redyellowgreenblue: {
+    0.2: [255, 0, 0],
+    0.5: [255, 255, 0],
+    0.8: [0, 255, 0],
+    1.0: [0, 0, 255],
+    0.0: [0, 0, 255],
+  },
+
+  //   Looking at the RGB values in the provided code, `[255, 0, 255]` at index 0.0 in the `ColorMap.redyellowgreenblue` map is the closest to pink. However, this is actually magenta/purple, not true pink. A typical pink would have RGB values like (255, 192, 203). There isn't a true pink color in the current color maps.
 };

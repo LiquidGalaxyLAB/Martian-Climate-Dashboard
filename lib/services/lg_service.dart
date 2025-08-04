@@ -37,6 +37,8 @@
 /// - [clearKml]: Clears KML files on LG slaves, optionally keeping logos.
 library;
 
+import 'dart:convert';
+
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/services.dart';
 
@@ -87,7 +89,20 @@ class LgService {
         username: username,
         onPasswordRequest: () => password,
       );
-      await client.execute(command);
+      SSHSession session = await client.execute(command);
+      // print("stdout: ${session.stdout}");
+      // print(session.stderr);
+      session.stdout.listen((data) {
+        print("std out : ${utf8.decode(data)}");
+      });
+      session.stderr.listen((data) {
+        print("std err : ${utf8.decode(data)}");
+      });
+      // print('STDOUT:\n$stdout');
+
+      // final stderr = await session.stderr.transform(utf8.decoder).join();
+      // print('STDERR:\n$stderr');
+
       // ignore: avoid_print
       print('Command sent to $host:$port');
     } catch (e) {
@@ -233,7 +248,8 @@ class LgService {
 
     for (var i = rigs; i >= 1; i--) {
       try {
-        final relaunchCommand = """RELAUNCH_CMD="\\
+        final relaunchCommand = """
+RELAUNCH_CMD="\\
 if [ -f /etc/init/lxdm.conf ]; then
   export SERVICE=lxdm
 elif [ -f /etc/init/lightdm.conf ]; then

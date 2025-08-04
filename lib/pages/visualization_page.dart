@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:martian_climate_dashboard/entities/api_entity.dart';
 import 'package:martian_climate_dashboard/entities/saved_session.dart';
+import 'package:martian_climate_dashboard/enums/colomap.dart';
 import 'package:martian_climate_dashboard/services/api_service.dart';
 import 'package:martian_climate_dashboard/services/gemini_service.dart';
 import 'package:martian_climate_dashboard/services/kml_generatation_service.dart';
@@ -45,6 +46,7 @@ class _VisualizationPageState extends State<VisualizationPage> {
 
   @override
   void dispose() {
+    print(geminiService.context);
     SavedSession.saveSessions(
       SavedSession(
         imageBase64: widget.base64Image,
@@ -88,6 +90,10 @@ class _VisualizationPageState extends State<VisualizationPage> {
       input: data,
       interpFactor: 4,
       skipFactor: 2,
+      colorMap:
+          apiEntity.variable == 't'
+              ? ColorMap.redyellowgreenblue
+              : ColorMap.yelloworangered,
     );
     String kml = await service.generateKml();
     LgService lgService = Provider.of<LgService>(context, listen: false);
@@ -125,6 +131,10 @@ class _VisualizationPageState extends State<VisualizationPage> {
         input: data,
         interpFactor: 4,
         skipFactor: 2,
+        colorMap:
+            apiEntity.variable == 't'
+                ? ColorMap.redyellowgreenblue
+                : ColorMap.yelloworangered,
       );
       String kml = await service.generateKml();
       LgService lgService = Provider.of<LgService>(context, listen: false);
@@ -177,7 +187,11 @@ class _VisualizationPageState extends State<VisualizationPage> {
 
   Future<void> _startOrbit() async {
     LgService lgService = Provider.of<LgService>(context, listen: false);
-    String kmlData = KmlService.generateOrbit(3000);
+    String kmlData = KmlService.generateOrbit(
+      0,
+      range: 3000000, // Adjust range as needed
+      tilt: 45, // Adjust tilt for better view
+    );
     await lgService.sendFile('/var/www/html/orbit.kml', (utf8.encode(kmlData)));
     print(kmlData);
     await lgService.execCommand(
@@ -192,9 +206,9 @@ class _VisualizationPageState extends State<VisualizationPage> {
       drawer: MCDDrawer(),
       appBar: AppBar(
         title: const Text('Mars Vision'),
-        actions: [
-          IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
-        ],
+        // actions: [
+        //   IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
+        // ],
       ),
       body: Stack(
         children: [
@@ -326,7 +340,7 @@ class _VisualizationPageState extends State<VisualizationPage> {
                         },
                       ),
                       PopupMenuButton<String>(
-                        icon: const Icon(Icons.add),
+                        icon: const Icon(Icons.more_horiz),
                         tooltip: "More options",
                         offset: const Offset(0, -120),
                         // onSelected: (String result) {
@@ -408,7 +422,7 @@ class _VisualizationPageState extends State<VisualizationPage> {
           if (_isLoading)
             Container(
               color: Colors.black.withOpacity(0.05),
-              width: double.infinity,
+              width: MediaQuery.of(context).size.width * .8,
               height: double.infinity,
               child: Center(
                 child: FractionallySizedBox(

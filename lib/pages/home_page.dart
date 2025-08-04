@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:martian_climate_dashboard/entities/api_entity.dart';
 import 'package:martian_climate_dashboard/entities/saved_session.dart';
+import 'package:martian_climate_dashboard/enums/colomap.dart';
 import 'package:martian_climate_dashboard/pages/visualization_page.dart';
 import 'package:martian_climate_dashboard/services/api_service.dart';
 import 'package:martian_climate_dashboard/services/kml_generatation_service.dart';
@@ -60,10 +61,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  /// Note: CancelableOperation from the `async` package does not stop the Future
-  /// it's wrapping. It only prevents the `onValue` or `onCancel` callbacks from
-  /// being executed. The `onSubmit` method will run to completion in the background
-  /// unless you add manual cancellation checks within it.
   void startCancelableTask() {
     _operation = CancelableOperation.fromFuture(
       onSubmit(),
@@ -153,6 +150,10 @@ class _HomePageState extends State<HomePage> {
         input: data,
         interpFactor: 4,
         skipFactor: 2,
+        colorMap:
+            apiEntity.variable == 't'
+                ? ColorMap.redyellowgreenblue
+                : ColorMap.yelloworangered,
       );
       String kml = await service.generateKml();
       await lgService.sendFile('/var/www/html/heatmap.kml', (utf8.encode(kml)));
@@ -187,6 +188,7 @@ class _HomePageState extends State<HomePage> {
                 ),
           ),
         );
+        // await _loadRecentSessions();
       }
     } catch (e) {
       if (mounted) {
@@ -368,7 +370,16 @@ class _HomePageState extends State<HomePage> {
                                 child: InkWell(
                                   borderRadius: BorderRadius.circular(12),
                                   onTap: () {
-                                    print(item.apiEntity.toJson());
+                                    print(item.context);
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder:
+                                            (context) => VisualizationPage(
+                                              base64Image: item.imageBase64,
+                                              apiEntity: item.apiEntity,
+                                            ),
+                                      ),
+                                    );
                                   },
                                   child: Padding(
                                     padding: const EdgeInsets.all(12.0),
@@ -396,7 +407,7 @@ class _HomePageState extends State<HomePage> {
                                               const SizedBox(height: 4),
                                               Text(
                                                 _formatDate(
-                                                  item.apiEntity.toDate,
+                                                  item.apiEntity.date,
                                                 ),
                                                 style: TextStyle(
                                                   color: Colors.grey.shade600,
