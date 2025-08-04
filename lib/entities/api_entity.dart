@@ -97,6 +97,16 @@ class ApiEntity {
   /// Latitude for a point.
   double? plat;
 
+  String? atomsScenario;
+
+  DateTime? date;
+
+  DateTime? toDate;
+
+  bool isGridEnabled;
+
+  bool dateRangeEnabled;
+
   ApiEntity({
     this.variable,
     this.datekeyhtml = 1,
@@ -129,6 +139,11 @@ class ApiEntity {
     this.palt,
     this.plon,
     this.plat,
+    this.atomsScenario,
+    this.date,
+    this.toDate,
+    this.isGridEnabled = false,
+    this.dateRangeEnabled = false,
   });
 
   Uri uri() {
@@ -173,6 +188,117 @@ class ApiEntity {
       'www-mars.lmd.jussieu.fr',
       '/mcd_python/cgi-bin/mcdcgi.py',
       params,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'variable': variable,
+      'datekeyhtml': datekeyhtml,
+      'ls': ls,
+      'localtime': localtime,
+      'year': year,
+      'month': month,
+      'day': day,
+      'hours': hours,
+      'minutes': minutes,
+      'seconds': seconds,
+      'julian': julian,
+      'martianyear': martianyear,
+      'sol': sol,
+      'latitude': latitude,
+      'longitude': longitude,
+      'altitude': altitude,
+      'zkey': zkey,
+      'spacecraft': spacecraft,
+      'isfixedlt': isfixedlt,
+      'dust': dust,
+      'hrkey': hrkey,
+      'averaging': averaging,
+      'dpi': dpi,
+      'islog': islog,
+      'colorm': colorm,
+      'minval': minval,
+      'maxval': maxval,
+      'proj': proj,
+      'palt': palt,
+      'plon': plon,
+      'plat': plat,
+      'date': date?.toIso8601String(),
+    };
+  }
+
+  factory ApiEntity.fromJson(Map<String, dynamic> json) {
+    return ApiEntity(
+      variable: json['variable'],
+      datekeyhtml: json['datekeyhtml'] ?? 1,
+      ls: json['ls']?.toDouble(),
+      localtime: json['localtime']?.toDouble(),
+      year: json['year'],
+      month: json['month'],
+      day: json['day'],
+      hours: json['hours'],
+      minutes: json['minutes'],
+      seconds: json['seconds'],
+      julian: json['julian']?.toDouble(),
+      martianyear: json['martianyear'],
+      sol: json['sol'],
+      latitude: json['latitude'] ?? 'all',
+      longitude: json['longitude'] ?? 'all',
+      altitude: json['altitude']?.toDouble(),
+      zkey: json['zkey'],
+      spacecraft: json['spacecraft'] ?? 'none',
+      isfixedlt: json['isfixedlt'] ?? 'off',
+      dust: json['dust'] ?? '1',
+      hrkey: json['hrkey'],
+      averaging: json['averaging'] ?? 'off',
+      dpi: json['dpi'],
+      islog: json['islog'] ?? 'off',
+      colorm: json['colorm'] ?? 'jet',
+      minval: json['minval'],
+      maxval: json['maxval'],
+      proj: json['proj'] ?? 'cyl',
+      palt: json['palt']?.toDouble(),
+      plon: json['plon']?.toDouble(),
+      plat: json['plat']?.toDouble(),
+      date: json['date'] != null ? DateTime.parse(json['date']) : null,
+    );
+  }
+
+  ApiEntity copyWith({required DateTime date}) {
+    return ApiEntity(
+      variable: variable,
+      datekeyhtml: datekeyhtml,
+      ls: ls,
+      localtime: localtime,
+      year: year,
+      month: month,
+      day: day,
+      hours: hours,
+      minutes: minutes,
+      seconds: seconds,
+      julian: julian,
+      martianyear: martianyear,
+      sol: sol,
+      latitude: latitude,
+      longitude: longitude,
+      altitude: altitude,
+      zkey: zkey,
+      spacecraft: spacecraft,
+      isfixedlt: isfixedlt,
+      dust: dust,
+      hrkey: hrkey,
+      averaging: averaging,
+      dpi: dpi,
+      islog: islog,
+      colorm: colorm,
+      minval: minval,
+      maxval: maxval,
+      proj: proj,
+      palt: palt,
+      plon: plon,
+      plat: plat,
+      date: date,
     );
   }
 }

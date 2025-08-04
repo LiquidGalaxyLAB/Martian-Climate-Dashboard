@@ -24,9 +24,12 @@ library;
 
 import 'package:http/http.dart' as http;
 import 'package:martian_climate_dashboard/entities/api_entity.dart';
+import 'dart:convert';
 
 class ApiService {
   http.Client client;
+  late String imageBase64;
+  late String globeImageBase64;
   ApiService({http.Client? client}) : client = client ?? http.Client();
 
   Future<String> fetchData(ApiEntity apiEntity) async {
@@ -38,12 +41,22 @@ class ApiService {
           "Failed to fetch data, status code: ${response.statusCode}",
         );
       }
-      final match = RegExp(
-        r'\.\./txt/([\w\-]+\.txt)',
-      ).firstMatch(response.body);
-      if (match == null) throw Exception("No match found in response body");
+      final textMatch =
+          RegExp(r'\.\./txt/([\w\-]+\.txt)').firstMatch(response.body)!;
 
-      final fileName = match.group(1);
+      final imageMatch =
+          RegExp(r'\.\./img/([\w\-]+\.png)').firstMatch(response.body)!;
+
+      final imgName = imageMatch.group(1);
+      final imageUri = uri.replace(path: '/mcd_python/img/$imgName', query: '');
+      final imageResponse = await client.get(imageUri);
+      if (imageResponse.statusCode != 200) {
+        throw Exception("Failed to fetch image");
+      }
+
+      imageBase64 = base64Encode(imageResponse.bodyBytes);
+
+      final fileName = textMatch.group(1);
       final dataUri = uri.replace(path: '/mcd_python/txt/$fileName', query: '');
       return await _fetchTextFile(dataUri);
     } catch (e) {
@@ -57,5 +70,7 @@ class ApiService {
       throw Exception("Failed to fetch data");
     }
     return response.body;
+    // final image = imageBase64;
+    // return json.encode({...json.decode(response.body), "image": image});
   }
 }
