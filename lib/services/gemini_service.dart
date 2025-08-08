@@ -15,7 +15,7 @@ class GeminiService {
     http.Client? client,
   }) : client = client ?? http.Client();
 
-  static const String model = 'gemini-2.5-flash';
+  static const String model = 'gemini-2.5-pro';
   static const String geminiUrl =
       'https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent';
 
@@ -74,14 +74,29 @@ class GeminiService {
       }
 
       final responseData = jsonDecode(response.body);
+      print("API Response Structure: ${responseData.keys}");
+
       if (responseData['candidates'] == null ||
-          responseData['candidates'].isEmpty ||
-          responseData['candidates'][0]['content'] == null) {
-        throw Exception('Invalid response format from Gemini API');
+          responseData['candidates'].isEmpty) {
+        throw Exception('No candidates in API response');
       }
 
-      final resp = responseData['candidates'][0]['content'];
-      final summaryText = resp['parts'][0]['text'] ?? 'No summary generated';
+      final candidate = responseData['candidates'][0];
+      if (candidate['content'] == null) {
+        throw Exception('No content in first candidate');
+      }
+
+      final content = candidate['content'];
+      if (content['parts'] == null || content['parts'].isEmpty) {
+        throw Exception('No parts in content');
+      }
+
+      final part = content['parts'][0];
+      if (part['text'] == null) {
+        throw Exception('No text in first part');
+      }
+
+      final summaryText = part['text'];
       initialSummary = summaryText;
 
       context.add({
@@ -121,7 +136,7 @@ class GeminiService {
             "parts": [
               {
                 "text":
-                    "You are a Mars climate assistant. Answer ONLY the user's specific questions directly. Do not provide general observations unless asked.",
+                    "You are a Mars climate assistant. Answer ONLY the user's specific questions directly. Never answer like you dont know the required answer, Do not provide general observations unless asked. Answer all the questions by using the Image provided to you in the previous context.",
               },
             ],
           },

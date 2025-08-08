@@ -14,12 +14,14 @@ import 'package:martian_climate_dashboard/services/lg_service.dart';
 import 'package:martian_climate_dashboard/utils/atmos_map.dart';
 import 'package:martian_climate_dashboard/utils/mars_facts.dart';
 import 'package:martian_climate_dashboard/utils/parameter_map.dart';
+import 'package:martian_climate_dashboard/utils/quickly_visualize_data.dart';
 import 'package:martian_climate_dashboard/widgets/button.dart';
 import 'package:martian_climate_dashboard/widgets/check_box.dart';
 import 'package:martian_climate_dashboard/widgets/circular_globe.dart';
 import 'package:martian_climate_dashboard/widgets/date_picker.dart';
 import 'package:martian_climate_dashboard/widgets/drawer.dart';
 import 'package:martian_climate_dashboard/widgets/parameter_picker.dart';
+import 'package:martian_climate_dashboard/widgets/visualization_card.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -100,6 +102,7 @@ class _HomePageState extends State<HomePage> {
 
     try {
       ApiService apiService = ApiService();
+
       final apiEntity =
           ApiEntity()
             ..variable = selectedParameter
@@ -143,11 +146,31 @@ class _HomePageState extends State<HomePage> {
             ..toDate = isDateRangeEnabled ? DateTime.parse(toDate!) : null;
 
       String data = await apiService.fetchData(apiEntity);
+      String imageBase64 = apiService.imageBase64;
+
+      await visualizeData(apiEntity, imageBase64);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> visualizeData(ApiEntity apiEntity, String imageBase64) async {
+    try {
       LgService lgService = Provider.of<LgService>(context, listen: false);
       await lgService.checkConnection();
 
       final service = KmlGenerationService(
-        input: data,
+        input: await ApiService().fetchData(apiEntity),
         interpFactor: 4,
         skipFactor: 2,
         colorMap:
@@ -155,14 +178,16 @@ class _HomePageState extends State<HomePage> {
                 ? ColorMap.redyellowgreenblue
                 : ColorMap.yelloworangered,
       );
+
       String kml = await service.generateKml();
-      await lgService.sendFile('/var/www/html/heatmap.kml', (utf8.encode(kml)));
+
+      await lgService.sendFile('/var/www/html/heatmap.kml', utf8.encode(kml));
       await lgService.changeToMars();
       await lgService.execCommand(
         'echo "http://lg1:81/heatmap.kml" > /var/www/html/kmls.txt',
       );
 
-      if (isGridEnabled) {
+      if (apiEntity.isGridEnabled) {
         String content = await rootBundle.loadString(
           'assets/kml/grid_overlay.kml',
         );
@@ -183,25 +208,19 @@ class _HomePageState extends State<HomePage> {
           MaterialPageRoute(
             builder:
                 (context) => VisualizationPage(
-                  base64Image: apiService.imageBase64,
+                  base64Image: imageBase64,
                   apiEntity: apiEntity,
                 ),
           ),
         );
-        // await _loadRecentSessions();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Visualization error: ${e.toString()}')),
+        );
       }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      rethrow;
     }
   }
 
@@ -340,6 +359,55 @@ class _HomePageState extends State<HomePage> {
                           isEnabled: true,
                         ),
                         const SizedBox(height: 10),
+                        const Text(
+                          "Quick Visualizations",
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: quicklyVisualizeData.length,
+                          itemBuilder: (context, index) {
+                            final item = quicklyVisualizeData[index];
+                            return RecentVisualizationCard(
+                              item: item,
+                              onTap: () async {
+                                setState(() {
+                                  _isLoading = true;
+                                });
+
+                                try {
+                                  await visualizeData(
+                                    item.apiEntity,
+                                    item.imageBase64,
+                                  );
+                                } catch (e) {
+                                  print(e.toString());
+                                } finally {
+                                  setState(() {
+                                    _isLoading = false;
+                                  });
+                                }
+
+                                // Navigator.of(context).push(
+                                //   MaterialPageRoute(
+                                //     builder:
+                                //         (context) => VisualizationPage(
+                                //           base64Image: item.imageBase64,
+                                //           apiEntity: item.apiEntity,
+                                //         ),
+                                //   ),
+                                // );
+                              },
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 20),
+
                         if (recentlyVisualized.isNotEmpty)
                           const Text(
                             "Recently Visualized",
@@ -357,90 +425,26 @@ class _HomePageState extends State<HomePage> {
                             itemCount: recentlyVisualized.length,
                             itemBuilder: (context, index) {
                               final item = recentlyVisualized[index];
-                              return Card(
-                                shadowColor: Colors.transparent,
-                                margin: const EdgeInsets.symmetric(
-                                  vertical: 8.0,
-                                  horizontal: 4.0,
-                                ),
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(12),
-                                  onTap: () {
-                                    print(item.context);
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder:
-                                            (context) => VisualizationPage(
-                                              base64Image: item.imageBase64,
-                                              apiEntity: item.apiEntity,
-                                            ),
-                                      ),
+                              return RecentVisualizationCard(
+                                item: item,
+                                onTap: () async {
+                                  setState(() {
+                                    _isLoading = true;
+                                  });
+
+                                  try {
+                                    await visualizeData(
+                                      item.apiEntity,
+                                      item.imageBase64,
                                     );
-                                  },
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(12.0),
-                                    child: Row(
-                                      // crossAxisAlignment:
-                                      // CrossAxisAlignment.start,
-                                      children: [
-                                        Expanded(
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.start,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                parameterMap[item
-                                                        .apiEntity
-                                                        .variable] ??
-                                                    'Unknown',
-                                                style: const TextStyle(
-                                                  fontSize: 21,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                _formatDate(
-                                                  item.apiEntity.date,
-                                                ),
-                                                style: TextStyle(
-                                                  color: Colors.grey.shade600,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 8),
-                                              Text(
-                                                item.apiEntity.atomsScenario ??
-                                                    'Default Scenario',
-                                                maxLines: 2,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: TextStyle(
-                                                  color: Colors.grey.shade700,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        const SizedBox(width: 16),
-                                        SphereProjectionImage(
-                                          base64Image: item.imageBase64,
-                                          crop: const Rect.fromLTRB(
-                                            160,
-                                            88,
-                                            179,
-                                            81,
-                                          ),
-                                          size: const Size(130, 130),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
+                                  } catch (e) {
+                                    print(e.toString());
+                                  } finally {
+                                    setState(() {
+                                      _isLoading = false;
+                                    });
+                                  }
+                                },
                               );
                             },
                           ),

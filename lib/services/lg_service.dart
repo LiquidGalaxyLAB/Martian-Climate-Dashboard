@@ -222,7 +222,6 @@ class LgService {
     await reboot();
   }
 
-  /// Reboots the Liquid Galaxy system.
   Future<void> reboot() async {
     final pw = password;
 
@@ -241,7 +240,6 @@ class LgService {
     }
   }
 
-  /// Relaunches the Liquid Galaxy system.
   Future<void> relaunch() async {
     final pw = password;
     final user = username;
