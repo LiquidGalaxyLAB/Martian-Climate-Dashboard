@@ -4,9 +4,12 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:martian_climate_dashboard/entities/api_entity.dart';
+import 'package:martian_climate_dashboard/entities/balloon_entity.dart';
 import 'package:martian_climate_dashboard/entities/saved_session.dart';
+import 'package:martian_climate_dashboard/enums/ballon_type.dart';
 import 'package:martian_climate_dashboard/enums/colomap.dart';
 import 'package:martian_climate_dashboard/services/api_service.dart';
+import 'package:martian_climate_dashboard/services/balloon_service.dart';
 import 'package:martian_climate_dashboard/services/gemini_service.dart';
 import 'package:martian_climate_dashboard/services/kml_generatation_service.dart';
 import 'package:martian_climate_dashboard/services/kml_service.dart';
@@ -36,12 +39,14 @@ class _VisualizationPageState extends State<VisualizationPage> {
   bool _isLoading = false;
   final random = Random();
   late DateTime? currentDate;
+  late BalloonService balloonService;
 
   @override
   void initState() {
     super.initState();
     currentDate = widget.apiEntity.date;
     loadApiKey();
+    _initalize();
   }
 
   @override
@@ -70,10 +75,27 @@ class _VisualizationPageState extends State<VisualizationPage> {
       apiKey: apiKey!,
       imageContent: widget.base64Image,
     );
-    await geminiService.generateSummary();
+    balloonService = BalloonService(
+      BalloonEntity(
+        type: BalloonType.info,
+        colorMap: ColorMap.redyellowgreenblue,
+        apiEntity: widget.apiEntity,
+        // content: 'Hello',
+      ),
+    );
+    await geminiService.generateSummary().then((response) async {
+      print(response);
+      await balloonService.showBalloon(
+        Provider.of<LgService>(context, listen: false),
+        response['parts'][0]['text'] ?? "No summary available",
+      );
+    });
     setState(() {});
+
     // print(geminiService.context);
   }
+
+  Future<void> _initalize() async {}
 
   Future<void> _buildNextDate() async {
     if (!widget.apiEntity.dateRangeEnabled) return;

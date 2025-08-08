@@ -1,0 +1,1 @@
+enum BalloonType { info, summary }
