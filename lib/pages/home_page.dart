@@ -422,7 +422,7 @@ class _HomePageState extends State<HomePage> {
                           ListView.builder(
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
-                            itemCount: recentlyVisualized.length,
+                            itemCount: min(recentlyVisualized.length, 5),
                             itemBuilder: (context, index) {
                               final item = recentlyVisualized[index];
                               return RecentVisualizationCard(

@@ -40,14 +40,13 @@ class _QRPageState extends State<QRPage> {
         );
         LgService lgService = Provider.of<LgService>(context, listen: false);
         lgService.host = jsonData['ip'];
-        lgService.port = int.parse(jsonData['port']?.toString() ?? '22');
+        lgService.port = jsonData['port'] ?? 22;
         lgService.username = jsonData['username'] ?? 'lg';
-        lgService.password = jsonData['password'] ?? 'lg';
-        lgService.rigs = int.parse(jsonData['screens'] ?? '3');
+        lgService.password = jsonData['password'] ?? 'lqgalaxy';
+        lgService.rigs = jsonData['screens'] ?? 5;
 
         await setPrefs(lgService);
         if (await lgService.checkConnection()) {
-          // Navigator.of(context).popUntil((ModalRoute.withName('/home')));
           Navigator.of(context).pop();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Connected to ${lgService.host}')),
