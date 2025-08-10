@@ -7,7 +7,7 @@ import 'package:flutter/services.dart';
 class SphereProjectionImage extends StatefulWidget {
   final String base64Image;
   final Size size;
-  final Rect? crop; // Add crop parameter
+  final Rect? crop;
 
   const SphereProjectionImage({
     super.key,
@@ -99,6 +99,7 @@ class SphereProjectionImageState extends State<SphereProjectionImage> {
           child: CircularProgressIndicator(),
         )
         : CustomPaint(painter: SpherePainter(_image!), size: widget.size);
+    // : Placeholder();
   }
 }
 
@@ -112,7 +113,7 @@ class SpherePainter extends CustomPainter {
     final paint =
         Paint()
           ..isAntiAlias = true
-          ..filterQuality = FilterQuality.high;
+          ..filterQuality = FilterQuality.low;
 
     final radius = size.width / 2;
     final center = Offset(radius, radius);
@@ -127,7 +128,7 @@ class SpherePainter extends CustomPainter {
     final imageHeight = image.height.toDouble();
 
     // Use pixel-based approach for better quality
-    const int resolution = 200; // Resolution of the sphere projection
+    const int resolution = 70; // Resolution of the sphere projection
 
     for (int y = 0; y < resolution; y++) {
       for (int x = 0; x < resolution; x++) {

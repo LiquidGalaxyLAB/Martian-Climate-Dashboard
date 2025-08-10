@@ -39,6 +39,7 @@ class ParameterPicker extends StatelessWidget {
           icon: const Icon(Icons.keyboard_arrow_down_sharp),
           value: selectedParameter,
           isDense: true,
+          isExpanded: true,
           decoration: const InputDecoration(
             contentPadding: EdgeInsets.symmetric(
               vertical: 0.0,

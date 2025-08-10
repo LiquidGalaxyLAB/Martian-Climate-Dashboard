@@ -32,6 +32,9 @@ class SavedSession {
   static Future<void> saveSessions(SavedSession session) async {
     final sessions = await loadSessions();
     sessions.insert(0, session);
+    if (sessions.length > 5) {
+      sessions.removeRange(5, sessions.length);
+    }
     final prefs = await SharedPreferences.getInstance();
     final jsonList = sessions.map((s) => s.toJson()).toList();
     await prefs.setString('saved_sessions', jsonEncode(jsonList));

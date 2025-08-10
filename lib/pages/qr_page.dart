@@ -28,7 +28,9 @@ class _QRPageState extends State<QRPage> {
   void _onDetect(BarcodeCapture capture) async {
     final String? code = capture.barcodes.first.rawValue;
     if (code != null && code != qrCode && connecting == false) {
-      connecting = true;
+      setState(() {
+        connecting = true;
+      });
       try {
         final Map<String, dynamic> jsonData = jsonDecode(code);
         print(jsonData['username']);
@@ -38,14 +40,14 @@ class _QRPageState extends State<QRPage> {
         );
         LgService lgService = Provider.of<LgService>(context, listen: false);
         lgService.host = jsonData['ip'];
-        lgService.port = int.parse(jsonData['port']?.toString() ?? '22');
+        lgService.port = jsonData['port'] ?? 22;
         lgService.username = jsonData['username'] ?? 'lg';
-        lgService.password = jsonData['password'] ?? 'lg';
-        lgService.rigs = int.parse(jsonData['screens'] ?? '3');
+        lgService.password = jsonData['password'] ?? 'lqgalaxy';
+        lgService.rigs = jsonData['screens'] ?? 5;
 
         await setPrefs(lgService);
         if (await lgService.checkConnection()) {
-          Navigator.of(context).popUntil((ModalRoute.withName('/home')));
+          Navigator.of(context).pop();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Connected to ${lgService.host}')),
           );
@@ -61,9 +63,10 @@ class _QRPageState extends State<QRPage> {
         ).showSnackBar(SnackBar(content: Text('Failed to connect: $e')));
         qrCode = code;
       } finally {
-        connecting = false;
+        setState(() {
+          connecting = false;
+        });
       }
-      setState(() {});
     }
   }
 
@@ -95,6 +98,27 @@ class _QRPageState extends State<QRPage> {
               ),
             ),
           ),
+          if (connecting)
+            Align(
+              alignment: Alignment.center,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                height: MediaQuery.of(context).size.width * 0.3,
+                width: MediaQuery.of(context).size.width * 0.3,
+                // color: Colors.white,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const Center(child: CircularProgressIndicator()),
+                    const Text('Connecting...'),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );

@@ -4,8 +4,10 @@ import 'dart:math';
 import 'package:async/async.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart';
 import 'package:martian_climate_dashboard/entities/api_entity.dart';
 import 'package:martian_climate_dashboard/entities/saved_session.dart';
+import 'package:martian_climate_dashboard/enums/colomap.dart';
 import 'package:martian_climate_dashboard/pages/visualization_page.dart';
 import 'package:martian_climate_dashboard/services/api_service.dart';
 import 'package:martian_climate_dashboard/services/kml_generatation_service.dart';
@@ -13,12 +15,14 @@ import 'package:martian_climate_dashboard/services/lg_service.dart';
 import 'package:martian_climate_dashboard/utils/atmos_map.dart';
 import 'package:martian_climate_dashboard/utils/mars_facts.dart';
 import 'package:martian_climate_dashboard/utils/parameter_map.dart';
+import 'package:martian_climate_dashboard/utils/quickly_visualize_data.dart';
 import 'package:martian_climate_dashboard/widgets/button.dart';
 import 'package:martian_climate_dashboard/widgets/check_box.dart';
 import 'package:martian_climate_dashboard/widgets/circular_globe.dart';
 import 'package:martian_climate_dashboard/widgets/date_picker.dart';
 import 'package:martian_climate_dashboard/widgets/drawer.dart';
 import 'package:martian_climate_dashboard/widgets/parameter_picker.dart';
+import 'package:martian_climate_dashboard/widgets/visualization_card.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -40,6 +44,7 @@ class _HomePageState extends State<HomePage> {
   final random = Random();
   CancelableOperation<void>? _operation;
   List<SavedSession> recentlyVisualized = [];
+  bool _isRecentItemsLoaded = false;
 
   @override
   void initState() {
@@ -48,6 +53,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _loadRecentSessions() async {
+    if (_isRecentItemsLoaded) return;
+
     final sessions = await SavedSession.loadSessions();
     print(sessions[0].apiEntity.variable);
     // SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -56,14 +63,11 @@ class _HomePageState extends State<HomePage> {
     if (mounted) {
       setState(() {
         recentlyVisualized = sessions;
+        _isRecentItemsLoaded = true;
       });
     }
   }
 
-  /// Note: CancelableOperation from the `async` package does not stop the Future
-  /// it's wrapping. It only prevents the `onValue` or `onCancel` callbacks from
-  /// being executed. The `onSubmit` method will run to completion in the background
-  /// unless you add manual cancellation checks within it.
   void startCancelableTask() {
     _operation = CancelableOperation.fromFuture(
       onSubmit(),
@@ -100,9 +104,11 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _isLoading = true;
     });
+    print("lag debug: process start");
 
     try {
       ApiService apiService = ApiService();
+
       final apiEntity =
           ApiEntity()
             ..variable = selectedParameter
@@ -146,22 +152,65 @@ class _HomePageState extends State<HomePage> {
             ..toDate = isDateRangeEnabled ? DateTime.parse(toDate!) : null;
 
       String data = await apiService.fetchData(apiEntity);
+      String imageBase64 = apiService.imageBase64;
+      await visualizeData(apiEntity, imageBase64, data: data);
+    } catch (e) {
+      if (e is ClientException) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Network error: Could not connect to server'),
+            ),
+          );
+        }
+      } else if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> visualizeData(
+    ApiEntity apiEntity,
+    String imageBase64, {
+    String? data,
+  }) async {
+    try {
+      print("lag debug: visualizeData function start");
       LgService lgService = Provider.of<LgService>(context, listen: false);
       await lgService.checkConnection();
+      ColorMap colorMap;
+      if (apiEntity.variable == 't') {
+        colorMap = ColorMap.bluegreenyellowred;
+      } else if (apiEntity.variable == 'p') {
+        colorMap = ColorMap.redyellowgreenblue;
+      } else {
+        colorMap = ColorMap.yelloworangered;
+      }
 
       final service = KmlGenerationService(
-        input: data,
+        input: data ?? await ApiService().fetchData(apiEntity),
         interpFactor: 4,
         skipFactor: 2,
+        colorMap: colorMap,
       );
-      String kml = await service.generateKml();
-      await lgService.sendFile('/var/www/html/heatmap.kml', (utf8.encode(kml)));
+
+      String kml = (await service.generateKml())["kml"];
+
+      await lgService.sendFile('/var/www/html/heatmap.kml', utf8.encode(kml));
       await lgService.changeToMars();
       await lgService.execCommand(
         'echo "http://lg1:81/heatmap.kml" > /var/www/html/kmls.txt',
       );
 
-      if (isGridEnabled) {
+      if (apiEntity.isGridEnabled) {
         String content = await rootBundle.loadString(
           'assets/kml/grid_overlay.kml',
         );
@@ -173,7 +222,7 @@ class _HomePageState extends State<HomePage> {
           'echo "http://lg1:81/grid.kml" >> /var/www/html/kmls.txt',
         );
         await lgService.execCommand(
-          'echo "flytoview=<LookAt><longitude>${73.0}</longitude><latitude>${-13.0}</latitude><range>${3529400.3297285}</range><tilt>${0}</tilt><heading>${0}</heading><gx:altitudeMode>relativeToGround</gx:altitudeMode></LookAt>" > /tmp/query.txt',
+          'echo "flytoview=<LookAt><longitude>${0.0}</longitude><latitude>${0.0}</latitude><range>${3529400.3297285}</range><tilt>${0}</tilt><heading>${0}</heading><gx:altitudeMode>relativeToGround</gx:altitudeMode></LookAt>" > /tmp/query.txt',
         );
       }
 
@@ -182,24 +231,20 @@ class _HomePageState extends State<HomePage> {
           MaterialPageRoute(
             builder:
                 (context) => VisualizationPage(
-                  base64Image: apiService.imageBase64,
+                  base64Image: imageBase64,
                   apiEntity: apiEntity,
+                  colorMap: colorMap,
                 ),
           ),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Visualization error: ${e.toString()}')),
+        );
       }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      rethrow;
     }
   }
 
@@ -338,6 +383,45 @@ class _HomePageState extends State<HomePage> {
                           isEnabled: true,
                         ),
                         const SizedBox(height: 10),
+                        const Text(
+                          "Quick Visualizations",
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: quicklyVisualizeData.length,
+                          itemBuilder: (context, index) {
+                            final item = quicklyVisualizeData[index];
+                            return RecentVisualizationCard(
+                              item: item,
+                              onTap: () async {
+                                setState(() {
+                                  _isLoading = true;
+                                });
+
+                                try {
+                                  await visualizeData(
+                                    item.apiEntity,
+                                    item.imageBase64,
+                                  );
+                                } catch (e) {
+                                  print(e.toString());
+                                } finally {
+                                  setState(() {
+                                    _isLoading = false;
+                                  });
+                                }
+                              },
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 20),
+
                         if (recentlyVisualized.isNotEmpty)
                           const Text(
                             "Recently Visualized",
@@ -352,84 +436,29 @@ class _HomePageState extends State<HomePage> {
                           ListView.builder(
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
-                            itemCount: recentlyVisualized.length,
+                            itemCount: min(recentlyVisualized.length, 5),
                             itemBuilder: (context, index) {
                               final item = recentlyVisualized[index];
-                              return Card(
-                                shadowColor: Colors.transparent,
-                                margin: const EdgeInsets.symmetric(
-                                  vertical: 8.0,
-                                  horizontal: 4.0,
-                                ),
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(12),
-                                  onTap: () {
-                                    print(item.apiEntity.toJson());
-                                  },
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(12.0),
-                                    child: Row(
-                                      // crossAxisAlignment:
-                                      // CrossAxisAlignment.start,
-                                      children: [
-                                        Expanded(
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.start,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                parameterMap[item
-                                                        .apiEntity
-                                                        .variable] ??
-                                                    'Unknown',
-                                                style: const TextStyle(
-                                                  fontSize: 21,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                _formatDate(
-                                                  item.apiEntity.toDate,
-                                                ),
-                                                style: TextStyle(
-                                                  color: Colors.grey.shade600,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 8),
-                                              Text(
-                                                item.apiEntity.atomsScenario ??
-                                                    'Default Scenario',
-                                                maxLines: 2,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: TextStyle(
-                                                  color: Colors.grey.shade700,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        const SizedBox(width: 16),
-                                        SphereProjectionImage(
-                                          base64Image: item.imageBase64,
-                                          crop: const Rect.fromLTRB(
-                                            160,
-                                            88,
-                                            179,
-                                            81,
-                                          ),
-                                          size: const Size(130, 130),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
+                              return RecentVisualizationCard(
+                                item: item,
+                                onTap: () async {
+                                  setState(() {
+                                    _isLoading = true;
+                                  });
+
+                                  try {
+                                    await visualizeData(
+                                      item.apiEntity,
+                                      item.imageBase64,
+                                    );
+                                  } catch (e) {
+                                    print(e.toString());
+                                  } finally {
+                                    setState(() {
+                                      _isLoading = false;
+                                    });
+                                  }
+                                },
                               );
                             },
                           ),
@@ -449,55 +478,62 @@ class _HomePageState extends State<HomePage> {
             Container(
               color: Colors.black.withOpacity(0.5),
               child: Center(
-                child: Card(
-                  elevation: 8,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 20.0,
-                      horizontal: 32.0,
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: MediaQuery.of(context).size.width * 0.8,
                     ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SizedBox(
-                          width: 50,
-                          height: 50,
-                          child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Theme.of(context).primaryColor,
+                    child: Card(
+                      elevation: 8,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 20.0,
+                          horizontal: 32.0,
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: 50,
+                              height: 50,
+                              child: CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Theme.of(context).primaryColor,
+                                ),
+                                strokeWidth: 5,
+                              ),
                             ),
-                            strokeWidth: 5,
-                          ),
+                            const SizedBox(height: 20),
+                            const Text(
+                              'Generating Visualization...',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              facts[random.nextInt(facts.length)],
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 20),
+                            TextButton(
+                              onPressed: stopTask,
+                              child: const Text(
+                                'Cancel',
+                                style: TextStyle(color: Colors.red),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 20),
-                        const Text(
-                          'Generating Visualization...',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          facts[random.nextInt(facts.length)],
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[600],
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 20),
-                        TextButton(
-                          onPressed: stopTask,
-                          child: const Text(
-                            'Cancel',
-                            style: TextStyle(color: Colors.red),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),

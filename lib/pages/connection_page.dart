@@ -52,11 +52,7 @@ class _ConnectPageState extends State<ConnectPage> {
     final lgService = Provider.of<LgService>(context);
 
     return Scaffold(
-      // backgroundColor: ThemeColors.backgroundColor,
       appBar: AppBar(title: const Text('Connect')),
-      // drawer: MCDDrawer(),
-      // appBar: AppBarPilot(title: "Connect"),
-      // drawer: DrawerPilot(  ),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -65,9 +61,6 @@ class _ConnectPageState extends State<ConnectPage> {
               child: MCDButton(
                 textColor: Colors.black,
                 onPressed: () {
-                  //   Navigator.of(
-                  //     context,
-                  //   ).push(MaterialPageRoute(builder: (context) => QRPage()));
                   print("Scan QR Code");
                   Navigator.of(context).pushNamed('/scan');
                 },
@@ -134,11 +127,7 @@ class _ConnectPageState extends State<ConnectPage> {
                     if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        // backgroundColor: ThemeColors.primaryColor,
-                        content: Text(
-                          res ? 'Connected' : 'Failed to connect',
-                          // style: TextStyle(color: ThemeColors.primaryTextColor),
-                        ),
+                        content: Text(res ? 'Connected' : 'Failed to connect'),
                       ),
                     );
                     String logo = await rootBundle.loadString(
@@ -155,13 +144,6 @@ class _ConnectPageState extends State<ConnectPage> {
                     );
                   }
                 },
-                // fillColor: ThemeColors.inverseBackgroundColor,
-                // textColor: ThemeColors.inverseTextColor,
-                // textDecoration: TextStyle(
-                //   fontSize: 20.0,
-                //   color: ThemeColors.inverseTextColor,
-                //   fontWeight: FontWeight.bold,
-                // ),
               ),
             ),
           ],

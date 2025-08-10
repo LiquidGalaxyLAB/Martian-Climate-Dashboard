@@ -4,14 +4,19 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:martian_climate_dashboard/entities/api_entity.dart';
+import 'package:martian_climate_dashboard/entities/balloon_entity.dart';
 import 'package:martian_climate_dashboard/entities/saved_session.dart';
+import 'package:martian_climate_dashboard/enums/ballon_type.dart';
+import 'package:martian_climate_dashboard/enums/colomap.dart';
 import 'package:martian_climate_dashboard/services/api_service.dart';
+import 'package:martian_climate_dashboard/services/balloon_service.dart';
 import 'package:martian_climate_dashboard/services/gemini_service.dart';
 import 'package:martian_climate_dashboard/services/kml_generatation_service.dart';
 import 'package:martian_climate_dashboard/services/kml_service.dart';
 import 'package:martian_climate_dashboard/services/lg_service.dart';
 import 'package:martian_climate_dashboard/utils/mars_facts.dart';
 import 'package:martian_climate_dashboard/utils/parameter_map.dart';
+import 'package:martian_climate_dashboard/widgets/dots_indicator.dart';
 import 'package:martian_climate_dashboard/widgets/drawer.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,10 +24,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 class VisualizationPage extends StatefulWidget {
   final String base64Image;
   final ApiEntity apiEntity;
+  final ColorMap colorMap;
   const VisualizationPage({
     super.key,
     required this.base64Image,
     required this.apiEntity,
+    required this.colorMap,
   });
 
   @override
@@ -33,82 +40,144 @@ class _VisualizationPageState extends State<VisualizationPage> {
   late GeminiService geminiService;
   TextEditingController msgController = TextEditingController();
   bool _isLoading = false;
+  bool _isWaitingForResponse = false;
   final random = Random();
   late DateTime? currentDate;
+  late BalloonService balloonService;
 
   @override
   void initState() {
     super.initState();
     currentDate = widget.apiEntity.date;
-    loadApiKey();
+    initialize();
   }
 
   @override
   void dispose() {
-    SavedSession.saveSessions(
-      SavedSession(
-        imageBase64: widget.base64Image,
-        apiEntity: widget.apiEntity,
-        context: geminiService.context,
-      ),
-    );
-    geminiService.dispose();
+    if (apiKey != null) {
+      print(geminiService.context);
+      SavedSession.saveSessions(
+        SavedSession(
+          imageBase64: widget.base64Image,
+          apiEntity: widget.apiEntity,
+          context: geminiService.context,
+        ),
+      );
+      geminiService.dispose();
+    }
     msgController.dispose();
     super.dispose();
   }
 
   String? apiKey;
-
-  Future<void> loadApiKey() async {
+  Future<void> initialize() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       apiKey = prefs.getString('api_key');
     });
+
+    if (apiKey == null) {
+      setState(() {
+        _isWaitingForResponse = false;
+      });
+      return;
+    }
+
     geminiService = GeminiService(
       apiKey: apiKey!,
       imageContent: widget.base64Image,
     );
-    await geminiService.generateSummary();
-    setState(() {});
-    // print(geminiService.context);
+
+    balloonService = BalloonService(
+      BalloonEntity(
+        type: BalloonType.info,
+        colorMap: ColorMap.redyellowgreenblue,
+        apiEntity: widget.apiEntity,
+      ),
+    );
+
+    setState(() {
+      _isWaitingForResponse = true;
+    });
+
+    try {
+      String response = await geminiService.generateSummary();
+      print(response);
+      await balloonService.showVisBalloon(
+        Provider.of<LgService>(context, listen: false),
+        response,
+        widget.colorMap,
+      );
+    } catch (e) {
+      print('Error generating summary: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error generating summary: ${e.toString()}')),
+      );
+    } finally {
+      setState(() {
+        _isWaitingForResponse = false;
+      });
+    }
   }
 
   Future<void> _buildNextDate() async {
     if (!widget.apiEntity.dateRangeEnabled) return;
 
-    final nextDate = currentDate!.add(Duration(days: 1));
-    print(nextDate.toIso8601String());
-    setState(() {
-      _isLoading = true;
-    });
-    ApiEntity apiEntity = widget.apiEntity.copyWith(date: nextDate);
-    ApiService apiService = ApiService();
-    String data = await apiService.fetchData(apiEntity);
-    final service = KmlGenerationService(
-      input: data,
-      interpFactor: 4,
-      skipFactor: 2,
-    );
-    String kml = await service.generateKml();
-    LgService lgService = Provider.of<LgService>(context, listen: false);
+    try {
+      final nextDate = currentDate!.add(Duration(days: 1));
+      setState(() {
+        _isLoading = true;
+      });
+      ApiEntity apiEntity = widget.apiEntity.copyWith(date: nextDate);
+      ApiService apiService = ApiService();
+      String data = await apiService.fetchData(apiEntity);
+      final service = KmlGenerationService(
+        input: data,
+        interpFactor: 4,
+        skipFactor: 2,
+        colorMap:
+            apiEntity.variable == 't'
+                ? ColorMap.redyellowgreenblue
+                : ColorMap.yelloworangered,
+      );
+      String kml = (await service.generateKml())["kml"];
+      LgService lgService = Provider.of<LgService>(context, listen: false);
 
-    await lgService.sendFile('/var/www/html/heatmap.kml', (utf8.encode(kml)));
+      await lgService.sendFile('/var/www/html/heatmap.kml', (utf8.encode(kml)));
 
-    await lgService.changeToMars();
+      await lgService.changeToMars();
 
-    await lgService.execCommand(
-      'echo "http://lg1:81/heatmap.kml" > /var/www/html/kmls.txt',
-    );
-    if (widget.apiEntity.isGridEnabled) {
       await lgService.execCommand(
-        'echo "http://lg1:81/grid.kml" >> /var/www/html/kmls.txt',
+        'echo "http://lg1:81/heatmap.kml" > /var/www/html/kmls.txt',
+      );
+      if (widget.apiEntity.isGridEnabled) {
+        await lgService.execCommand(
+          'echo "http://lg1:81/grid.kml" >> /var/www/html/kmls.txt',
+        );
+      }
+
+      setState(() {
+        _isLoading = false;
+        currentDate = nextDate;
+      });
+
+      if (apiKey != null) {
+        await geminiService.clearContext();
+        String newSummary = await geminiService.generateSummary();
+        await balloonService.showVisBalloon(
+          Provider.of<LgService>(context, listen: false),
+          newSummary,
+          widget.colorMap,
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error updating date: ${e.toString()}')),
       );
     }
-
-    setState(() {
-      _isLoading = false;
-      currentDate = nextDate;
-    });
   }
 
   Future<void> _buildPrevDate() async {
@@ -125,8 +194,12 @@ class _VisualizationPageState extends State<VisualizationPage> {
         input: data,
         interpFactor: 4,
         skipFactor: 2,
+        colorMap:
+            apiEntity.variable == 't'
+                ? ColorMap.redyellowgreenblue
+                : ColorMap.yelloworangered,
       );
-      String kml = await service.generateKml();
+      String kml = (await service.generateKml())["kml"];
       LgService lgService = Provider.of<LgService>(context, listen: false);
 
       await lgService.sendFile('/var/www/html/heatmap.kml', (utf8.encode(kml)));
@@ -154,34 +227,57 @@ class _VisualizationPageState extends State<VisualizationPage> {
 
     setState(() {
       msgController.clear();
+      _isWaitingForResponse = true;
     });
 
-    // try {
-    final response = await geminiService.callApi(text);
-    setState(() {});
-    // } catch (e) {
-    //   print(e);
-    //   ScaffoldMessenger.of(
-    //     context,
-    //   ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
-    // }
+    try {
+      final response = await geminiService.sendMessage(text);
+      if (!response['location'].isEmpty) {
+        try {
+          print(response['location']);
+          LgService lgService = Provider.of<LgService>(context, listen: false);
+          BalloonService.showLocationBalloon(
+            lgService,
+            response['location']['info'],
+            response['location']['name'],
+            response['location']['coordinates'],
+          );
+          await lgService.execCommand(
+            'echo "flytoview=<LookAt><longitude>${response['location']['coordinates'][0]}</longitude><latitude>${response['location']['coordinates'][1]}</latitude><range>${3529400.3297285}</range><tilt>${0}</tilt><heading>${0}</heading><gx:altitudeMode>relativeToGround</gx:altitudeMode></LookAt>" > /tmp/query.txt',
+          );
+        } catch (e) {
+          print('Error showing location balloon: $e');
+        }
+      }
+      setState(() {
+        _isWaitingForResponse = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isWaitingForResponse = false;
+      });
+      print(e);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+    }
   }
 
   Future<void> _stopOrbit() async {
     LgService lgService = Provider.of<LgService>(context, listen: false);
-    await lgService.execCommand('echo "playtour=None" > /tmp/query.txt');
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Stop Orbit not implemented yet.')),
-    );
+    await lgService.execCommand('echo "exittour=true" > /tmp/query.txt');
+    // ScaffoldMessenger.of(context).showSnackBar(
+    //   const SnackBar(content: Text('Stop Orbit not implemented yet.')),
+    // );
   }
 
   Future<void> _startOrbit() async {
     LgService lgService = Provider.of<LgService>(context, listen: false);
-    String kmlData = KmlService.generateOrbit(3000);
+    String kmlData = KmlService.generatePrimeMeridianOrbit();
     await lgService.sendFile('/var/www/html/orbit.kml', (utf8.encode(kmlData)));
-    print(kmlData);
+    // print(kmlData);
     await lgService.execCommand(
-      'echo "http://lg1:81/Orbit.kml" >> /var/www/html/kmls.txt',
+      'echo "http://lg1:81/orbit.kml" >> /var/www/html/kmls.txt',
     );
     await lgService.execCommand('echo "playtour=Orbit" > /tmp/query.txt');
   }
@@ -192,9 +288,9 @@ class _VisualizationPageState extends State<VisualizationPage> {
       drawer: MCDDrawer(),
       appBar: AppBar(
         title: const Text('Mars Vision'),
-        actions: [
-          IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
-        ],
+        // actions: [
+        //   IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
+        // ],
       ),
       body: Stack(
         children: [
@@ -233,22 +329,70 @@ class _VisualizationPageState extends State<VisualizationPage> {
                 Expanded(
                   child:
                       apiKey == null
-                          ? const Center(child: CircularProgressIndicator())
-                          : geminiService.context.isEmpty
-                          ? Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text("Generating summary..."),
-                              SizedBox(width: 10),
-                              CircularProgressIndicator(),
-                            ],
+                          ? const Center(
+                            child: Text(
+                              "API key required, please configure it.",
+                            ),
                           )
+                          // : geminiService.context.isEmpty
+                          // ? Row(
+                          //   mainAxisAlignment: MainAxisAlignment.center,
+                          //   children: [
+                          //     Text("Generating summary..."),
+                          //     SizedBox(width: 10),
+                          //     CircularProgressIndicator(),
+                          //   ],
+                          // )
                           : ListView.builder(
                             padding: const EdgeInsets.only(bottom: 20),
-                            itemCount: geminiService.context.length,
+                            itemCount:
+                                geminiService.context.length +
+                                (_isWaitingForResponse ? 1 : 0),
                             itemBuilder: (context, index) {
+                              // Show loading bubble at the end if waiting for response
+                              if (index == geminiService.context.length &&
+                                  _isWaitingForResponse) {
+                                return Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Container(
+                                    margin: const EdgeInsets.symmetric(
+                                      vertical: 4,
+                                      horizontal: 12,
+                                    ),
+                                    padding: const EdgeInsets.all(12),
+                                    constraints: BoxConstraints(
+                                      maxWidth:
+                                          MediaQuery.of(context).size.width *
+                                          0.7,
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const SizedBox(width: 3),
+                                        Text("Thinking "),
+                                        JumpingDots(
+                                          color: Colors.black54,
+                                          radius: 4,
+                                          numberOfDots: 3,
+                                          animationDuration: Duration(
+                                            milliseconds: 200,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }
+
                               final message = geminiService.context[index];
                               final isUser = message['role'] == 'user';
+
+                              final messageText =
+                                  message['parts'] != null &&
+                                          message['parts'].isNotEmpty &&
+                                          message['parts'][0]['text'] != null
+                                      ? message['parts'][0]['text']
+                                      : "Empty message";
 
                               return Align(
                                 alignment:
@@ -272,14 +416,7 @@ class _VisualizationPageState extends State<VisualizationPage> {
                                     maxWidth:
                                         MediaQuery.of(context).size.width * 0.7,
                                   ),
-                                  child: MarkdownBody(
-                                    data:
-                                        message['parts'][0]['text'] ??
-                                        "Empty message",
-                                    // style: TextStyle(
-                                    //   color: isUser ? Colors.black87 : Colors.black,
-                                    // ),
-                                  ),
+                                  child: MarkdownBody(data: messageText),
                                 ),
                               );
                             },
@@ -317,6 +454,14 @@ class _VisualizationPageState extends State<VisualizationPage> {
                         ),
                       ),
                       IconButton(
+                        // onPressed: (_isWaitingForResponse || apiKey == null || msgController.text.trim().isEmpty)
+                        //   ? null
+                        //   : () {
+                        //     final text = msgController.text;
+                        //     if (text.trim().isEmpty) return;
+                        //     _sendMessage(text);
+                        //     FocusScope.of(context).unfocus();
+                        // },
                         icon: const Icon(Icons.send),
                         onPressed: () {
                           final text = msgController.text;
@@ -326,7 +471,7 @@ class _VisualizationPageState extends State<VisualizationPage> {
                         },
                       ),
                       PopupMenuButton<String>(
-                        icon: const Icon(Icons.add),
+                        icon: const Icon(Icons.more_horiz),
                         tooltip: "More options",
                         offset: const Offset(0, -120),
                         // onSelected: (String result) {
@@ -344,7 +489,6 @@ class _VisualizationPageState extends State<VisualizationPage> {
                         //       );
                         //       break;
                         //     case 'generate_orbit':
-                        //       // Placeholder for generate orbit functionality
                         //       ScaffoldMessenger.of(context).showSnackBar(
                         //         const SnackBar(
                         //           content: Text(
@@ -408,11 +552,14 @@ class _VisualizationPageState extends State<VisualizationPage> {
           if (_isLoading)
             Container(
               color: Colors.black.withOpacity(0.05),
-              width: double.infinity,
+              width: MediaQuery.of(context).size.width,
               height: double.infinity,
               child: Center(
-                child: FractionallySizedBox(
-                  widthFactor: 0.7,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.of(context).size.width * 0.8,
+                  ),
+
                   child: Card(
                     elevation: 8,
                     shape: RoundedRectangleBorder(

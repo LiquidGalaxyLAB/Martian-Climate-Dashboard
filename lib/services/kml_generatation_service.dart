@@ -42,14 +42,16 @@ class KmlGenerationService {
   final String input;
   final int interpFactor;
   final int skipFactor;
+  ColorMap colorMap;
 
   KmlGenerationService({
     required this.input,
     required this.interpFactor,
     required this.skipFactor,
+    required this.colorMap,
   });
 
-  Future<String> generateKml() async {
+  Future<Map<String, dynamic>> generateKml() async {
     final lines = input.split('\n');
     final lats = <double>[];
     final lons = <double>[];
@@ -171,7 +173,12 @@ class KmlGenerationService {
       ..writeln('</Document>')
       ..writeln('</kml>');
 
-    return buffer.toString();
+    return {
+      "kml": buffer.toString(),
+      "min": minP,
+      "max": maxP,
+      "colorMap": colorMap,
+    };
   }
 
   Future<InterpolatedGrid> interpolateGrid(
@@ -270,8 +277,7 @@ class KmlGenerationService {
   ) {
     final ratio = (parameterValue - minP) / deltaP;
 
-    final Map<double, List<int>> stops =
-        colorMapData[ColorMap.yelloworangered]!;
+    final Map<double, List<int>> stops = colorMapData[colorMap]!;
 
     double leftStop = 0.0;
     List<int> leftColor = [0, 0, 0];
