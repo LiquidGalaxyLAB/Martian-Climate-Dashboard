@@ -51,7 +51,7 @@ class KmlGenerationService {
     required this.colorMap,
   });
 
-  Future<String> generateKml() async {
+  Future<Map<String, dynamic>> generateKml() async {
     final lines = input.split('\n');
     final lats = <double>[];
     final lons = <double>[];
@@ -173,7 +173,12 @@ class KmlGenerationService {
       ..writeln('</Document>')
       ..writeln('</kml>');
 
-    return buffer.toString();
+    return {
+      "kml": buffer.toString(),
+      "min": minP,
+      "max": maxP,
+      "colorMap": colorMap,
+    };
   }
 
   Future<InterpolatedGrid> interpolateGrid(

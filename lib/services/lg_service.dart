@@ -41,6 +41,8 @@ import 'dart:convert';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/services.dart';
+import 'package:crypto/crypto.dart'; // MD5 hashing
+import 'dart:typed_data';
 
 class LgService {
   String host = "192.168.121.3";
@@ -49,6 +51,11 @@ class LgService {
   String password = "lg";
   int rigs = 3;
   bool marsSelected = false;
+  SSHClient? _client;
+  SftpClient? _sftp;
+  final Map<String, String> _lastFileHash = {};
+  Future<void> _fileQueue = Future.value();
+  bool _connecting = false;
 
   int get logoScreen {
     if (rigs == 1) {
@@ -57,6 +64,15 @@ class LgService {
 
     // Gets the most left screen.
     return (rigs / 2).floor() + 2;
+  }
+
+  int get balloonScreen {
+    if (rigs == 1) {
+      return 1;
+    }
+
+    // Gets the most right screen.
+    return (rigs / 2).floor() + 1;
   }
 
   Future<bool> checkConnection() async {
@@ -113,7 +129,12 @@ class LgService {
 
   Future<void> changeToMars() async {
     try {
+      String blankKml =
+          '<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom"><Document></Document></kml>';
       await execCommand('echo "planet=mars" > /tmp/query.txt');
+      await execCommand(
+        'echo "$blankKml" > /var/www/html/kml/slave_${balloonScreen}.kml',
+      );
       marsSelected = true;
     } catch (e) {
       print('Failed to change to Mars, $e');
@@ -126,7 +147,103 @@ class LgService {
     await execCommand("echo '$logo' > /var/www/html/kml/slave_$logoScreen.kml");
   }
 
+  Future<void> _ensureSftp() async {
+    if (_sftp != null) return;
+    if (_connecting) {
+      while (_connecting) {
+        await Future.delayed(const Duration(milliseconds: 50));
+      }
+      return;
+    }
+    _connecting = true;
+    try {
+      final socket = await SSHSocket.connect(
+        host,
+        port,
+        timeout: const Duration(seconds: 5),
+      );
+      _client = SSHClient(
+        socket,
+        username: username,
+        onPasswordRequest: () => password,
+        identities: const [],
+      );
+      _sftp = await _client!.sftp();
+    } catch (e) {
+      print('SFTP init failed: $e');
+      try {
+        _client?.close();
+      } catch (_) {}
+      _client = null;
+      _sftp = null;
+    } finally {
+      _connecting = false;
+    }
+  }
+
+  Future<void> disposePersistent() async {
+    try {
+      _sftp?.close();
+      _client?.close();
+    } catch (_) {}
+    _sftp = null;
+    _client = null;
+  }
+
   Future<LgService> sendFile(String remoteFilepath, Uint8List content) async {
+    _fileQueue = _fileQueue.then((_) async {
+      final hash = md5.convert(content).toString();
+      final lastHash = _lastFileHash[remoteFilepath];
+      if (lastHash == hash) {
+        print('sendFile skipped (unchanged): $remoteFilepath');
+        return;
+      }
+
+      await _ensureSftp();
+      if (_sftp == null) {
+        print('Falling back (no persistent SFTP) for $remoteFilepath');
+        await _legacySendFile(remoteFilepath, content);
+        _lastFileHash[remoteFilepath] = hash;
+        return;
+      }
+
+      try {
+        final file = await _sftp!.open(
+          remoteFilepath,
+          mode:
+              SftpFileOpenMode.create |
+              SftpFileOpenMode.truncate |
+              SftpFileOpenMode.write,
+        );
+
+        const int chunkSize = 32 * 1024;
+        int offset = 0;
+        while (offset < content.length) {
+          final end = (offset + chunkSize).clamp(0, content.length);
+          final slice = content.sublist(offset, end);
+          await file.write(
+            Stream<Uint8List>.fromIterable([slice]),
+            offset: offset,
+          );
+          offset = end;
+        }
+        await file.close();
+        _lastFileHash[remoteFilepath] = hash;
+        print('sendFile done (reused SFTP): $remoteFilepath');
+      } catch (e) {
+        print('Persistent send failed ($remoteFilepath): $e');
+        try {
+          await disposePersistent();
+        } catch (_) {}
+        await _legacySendFile(remoteFilepath, content);
+        _lastFileHash[remoteFilepath] = hash;
+      }
+    });
+    await _fileQueue;
+    return this;
+  }
+
+  Future<void> _legacySendFile(String remoteFilepath, Uint8List content) async {
     try {
       final socket = await SSHSocket.connect(host, port);
       final client = SSHClient(
@@ -134,9 +251,7 @@ class LgService {
         username: username,
         onPasswordRequest: () => password,
       );
-
       final sftp = await client.sftp();
-
       final file = await sftp.open(
         remoteFilepath,
         mode:
@@ -144,19 +259,14 @@ class LgService {
             SftpFileOpenMode.create |
             SftpFileOpenMode.write,
       );
-
-      final fileStream = Stream.fromIterable([content]);
-      int offset = 0;
-
-      await for (final chunk in fileStream) {
-        await file.write(Stream.fromIterable([chunk]), offset: offset);
-        offset += chunk.length;
-      }
-      print('Done sending file');
+      await file.write(Stream.fromIterable([content]), offset: 0);
+      await file.close();
+      sftp.close();
+      client.close();
+      print('Legacy sendFile done: $remoteFilepath');
     } catch (e) {
-      print('Failed to send file to $host:$port, $e');
+      print('Legacy sendFile failed: $e');
     }
-    return this;
   }
 
   Future<SSHClient> getClient(host, port, username, password) async {
@@ -296,14 +406,11 @@ fi
         'echo "exittour=true" > /tmp/query.txt && > /var/www/html/kmls.txt';
 
     for (var i = 2; i <= rigs; i++) {
-      String blankKml = '''
-    <?xml version="1.0" encoding="UTF-8"?>
-    <kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
-      <Document>
-      </Document>
-    </kml>
-    ''';
-      query += " && echo '$blankKml' > /var/www/html/kml/slave_$i.kml";
+      String blankKml =
+          '<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom"><Document></Document></kml>';
+      if (i != logoScreen) {
+        query += " && echo '$blankKml' > /var/www/html/kml/slave_$i.kml";
+      }
     }
 
     await execCommand(query);

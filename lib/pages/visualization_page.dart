@@ -24,10 +24,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 class VisualizationPage extends StatefulWidget {
   final String base64Image;
   final ApiEntity apiEntity;
+  final ColorMap colorMap;
   const VisualizationPage({
     super.key,
     required this.base64Image,
     required this.apiEntity,
+    required this.colorMap,
   });
 
   @override
@@ -101,9 +103,10 @@ class _VisualizationPageState extends State<VisualizationPage> {
     try {
       String response = await geminiService.generateSummary();
       print(response);
-      await balloonService.showBalloon(
+      await balloonService.showVisBalloon(
         Provider.of<LgService>(context, listen: false),
         response,
+        widget.colorMap,
       );
     } catch (e) {
       print('Error generating summary: $e');
@@ -137,7 +140,7 @@ class _VisualizationPageState extends State<VisualizationPage> {
                 ? ColorMap.redyellowgreenblue
                 : ColorMap.yelloworangered,
       );
-      String kml = await service.generateKml();
+      String kml = (await service.generateKml())["kml"];
       LgService lgService = Provider.of<LgService>(context, listen: false);
 
       await lgService.sendFile('/var/www/html/heatmap.kml', (utf8.encode(kml)));
@@ -161,9 +164,10 @@ class _VisualizationPageState extends State<VisualizationPage> {
       if (apiKey != null) {
         await geminiService.clearContext();
         String newSummary = await geminiService.generateSummary();
-        await balloonService.showBalloon(
+        await balloonService.showVisBalloon(
           Provider.of<LgService>(context, listen: false),
           newSummary,
+          widget.colorMap,
         );
       }
     } catch (e) {
@@ -195,7 +199,7 @@ class _VisualizationPageState extends State<VisualizationPage> {
                 ? ColorMap.redyellowgreenblue
                 : ColorMap.yelloworangered,
       );
-      String kml = await service.generateKml();
+      String kml = (await service.generateKml())["kml"];
       LgService lgService = Provider.of<LgService>(context, listen: false);
 
       await lgService.sendFile('/var/www/html/heatmap.kml', (utf8.encode(kml)));
@@ -228,7 +232,23 @@ class _VisualizationPageState extends State<VisualizationPage> {
 
     try {
       final response = await geminiService.sendMessage(text);
-      print(response);
+      if (!response['location'].isEmpty) {
+        try {
+          print(response['location']);
+          LgService lgService = Provider.of<LgService>(context, listen: false);
+          BalloonService.showLocationBalloon(
+            lgService,
+            response['location']['info'],
+            response['location']['name'],
+            response['location']['coordinates'],
+          );
+          await lgService.execCommand(
+            'echo "flytoview=<LookAt><longitude>${response['location']['coordinates'][0]}</longitude><latitude>${response['location']['coordinates'][1]}</latitude><range>${3529400.3297285}</range><tilt>${0}</tilt><heading>${0}</heading><gx:altitudeMode>relativeToGround</gx:altitudeMode></LookAt>" > /tmp/query.txt',
+          );
+        } catch (e) {
+          print('Error showing location balloon: $e');
+        }
+      }
       setState(() {
         _isWaitingForResponse = false;
       });
@@ -245,19 +265,19 @@ class _VisualizationPageState extends State<VisualizationPage> {
 
   Future<void> _stopOrbit() async {
     LgService lgService = Provider.of<LgService>(context, listen: false);
-    await lgService.execCommand('echo "playtour=None" > /tmp/query.txt');
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Stop Orbit not implemented yet.')),
-    );
+    await lgService.execCommand('echo "exittour=true" > /tmp/query.txt');
+    // ScaffoldMessenger.of(context).showSnackBar(
+    //   const SnackBar(content: Text('Stop Orbit not implemented yet.')),
+    // );
   }
 
   Future<void> _startOrbit() async {
     LgService lgService = Provider.of<LgService>(context, listen: false);
-    String kmlData = KmlService.generateOrbit(0, range: 3000000, tilt: 45);
+    String kmlData = KmlService.generatePrimeMeridianOrbit();
     await lgService.sendFile('/var/www/html/orbit.kml', (utf8.encode(kmlData)));
-    print(kmlData);
+    // print(kmlData);
     await lgService.execCommand(
-      'echo "http://lg1:81/Orbit.kml" >> /var/www/html/kmls.txt',
+      'echo "http://lg1:81/orbit.kml" >> /var/www/html/kmls.txt',
     );
     await lgService.execCommand('echo "playtour=Orbit" > /tmp/query.txt');
   }

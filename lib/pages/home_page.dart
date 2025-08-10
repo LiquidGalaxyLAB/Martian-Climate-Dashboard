@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:async/async.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart';
 import 'package:martian_climate_dashboard/entities/api_entity.dart';
 import 'package:martian_climate_dashboard/entities/saved_session.dart';
 import 'package:martian_climate_dashboard/enums/colomap.dart';
@@ -43,6 +44,7 @@ class _HomePageState extends State<HomePage> {
   final random = Random();
   CancelableOperation<void>? _operation;
   List<SavedSession> recentlyVisualized = [];
+  bool _isRecentItemsLoaded = false;
 
   @override
   void initState() {
@@ -51,6 +53,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _loadRecentSessions() async {
+    if (_isRecentItemsLoaded) return;
+
     final sessions = await SavedSession.loadSessions();
     print(sessions[0].apiEntity.variable);
     // SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -59,6 +63,7 @@ class _HomePageState extends State<HomePage> {
     if (mounted) {
       setState(() {
         recentlyVisualized = sessions;
+        _isRecentItemsLoaded = true;
       });
     }
   }
@@ -99,6 +104,7 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _isLoading = true;
     });
+    print("lag debug: process start");
 
     try {
       ApiService apiService = ApiService();
@@ -147,10 +153,17 @@ class _HomePageState extends State<HomePage> {
 
       String data = await apiService.fetchData(apiEntity);
       String imageBase64 = apiService.imageBase64;
-
-      await visualizeData(apiEntity, imageBase64);
+      await visualizeData(apiEntity, imageBase64, data: data);
     } catch (e) {
-      if (mounted) {
+      if (e is ClientException) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Network error: Could not connect to server'),
+            ),
+          );
+        }
+      } else if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
@@ -164,22 +177,32 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Future<void> visualizeData(ApiEntity apiEntity, String imageBase64) async {
+  Future<void> visualizeData(
+    ApiEntity apiEntity,
+    String imageBase64, {
+    String? data,
+  }) async {
     try {
+      print("lag debug: visualizeData function start");
       LgService lgService = Provider.of<LgService>(context, listen: false);
       await lgService.checkConnection();
+      ColorMap colorMap;
+      if (apiEntity.variable == 't') {
+        colorMap = ColorMap.bluegreenyellowred;
+      } else if (apiEntity.variable == 'p') {
+        colorMap = ColorMap.redyellowgreenblue;
+      } else {
+        colorMap = ColorMap.yelloworangered;
+      }
 
       final service = KmlGenerationService(
-        input: await ApiService().fetchData(apiEntity),
+        input: data ?? await ApiService().fetchData(apiEntity),
         interpFactor: 4,
         skipFactor: 2,
-        colorMap:
-            apiEntity.variable == 't'
-                ? ColorMap.redyellowgreenblue
-                : ColorMap.yelloworangered,
+        colorMap: colorMap,
       );
 
-      String kml = await service.generateKml();
+      String kml = (await service.generateKml())["kml"];
 
       await lgService.sendFile('/var/www/html/heatmap.kml', utf8.encode(kml));
       await lgService.changeToMars();
@@ -199,7 +222,7 @@ class _HomePageState extends State<HomePage> {
           'echo "http://lg1:81/grid.kml" >> /var/www/html/kmls.txt',
         );
         await lgService.execCommand(
-          'echo "flytoview=<LookAt><longitude>${73.0}</longitude><latitude>${-13.0}</latitude><range>${3529400.3297285}</range><tilt>${0}</tilt><heading>${0}</heading><gx:altitudeMode>relativeToGround</gx:altitudeMode></LookAt>" > /tmp/query.txt',
+          'echo "flytoview=<LookAt><longitude>${0.0}</longitude><latitude>${0.0}</latitude><range>${3529400.3297285}</range><tilt>${0}</tilt><heading>${0}</heading><gx:altitudeMode>relativeToGround</gx:altitudeMode></LookAt>" > /tmp/query.txt',
         );
       }
 
@@ -210,6 +233,7 @@ class _HomePageState extends State<HomePage> {
                 (context) => VisualizationPage(
                   base64Image: imageBase64,
                   apiEntity: apiEntity,
+                  colorMap: colorMap,
                 ),
           ),
         );
@@ -392,16 +416,6 @@ class _HomePageState extends State<HomePage> {
                                     _isLoading = false;
                                   });
                                 }
-
-                                // Navigator.of(context).push(
-                                //   MaterialPageRoute(
-                                //     builder:
-                                //         (context) => VisualizationPage(
-                                //           base64Image: item.imageBase64,
-                                //           apiEntity: item.apiEntity,
-                                //         ),
-                                //   ),
-                                // );
                               },
                             );
                           },

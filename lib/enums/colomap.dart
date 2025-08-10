@@ -19,11 +19,11 @@ Map<ColorMap, Map<double, List<int>>> colorMapData = {
     0.0: [255, 255, 0],
   },
   ColorMap.bluegreenyellowred: {
+    0.0: [0, 0, 255],
     0.2: [0, 255, 0],
-    0.5: [0, 255, 255],
-    0.8: [0, 0, 255],
+    0.5: [255, 255, 0],
+    0.8: [255, 128, 0],
     1.0: [255, 0, 0],
-    0.0: [255, 255, 0],
   },
   ColorMap.grey: {
     0.2: [200, 200, 200],
@@ -33,12 +33,10 @@ Map<ColorMap, Map<double, List<int>>> colorMapData = {
     0.0: [255, 255, 255],
   },
   ColorMap.redyellowgreenblue: {
-    0.2: [255, 0, 0],
-    0.5: [255, 255, 0],
-    0.8: [0, 255, 0],
-    1.0: [0, 0, 255],
-    0.0: [0, 0, 255],
+    0.0: [255, 0, 0], // red
+    0.2: [255, 156, 0], // orange
+    0.5: [128, 255, 0], // yellow-green
+    0.8: [0, 150, 105], // teal
+    1.0: [0, 0, 255], // blue
   },
-
-  //   Looking at the RGB values in the provided code, `[255, 0, 255]` at index 0.0 in the `ColorMap.redyellowgreenblue` map is the closest to pink. However, this is actually magenta/purple, not true pink. A typical pink would have RGB values like (255, 192, 203). There isn't a true pink color in the current color maps.
 };
