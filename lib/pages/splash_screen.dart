@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:martian_climate_dashboard/services/lg_service.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -18,8 +19,10 @@ class _SplashScreenState extends State<SplashScreen> {
       Navigator.pushReplacementNamed(context, '/home');
     });
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final prefs = SharedPreferences.getInstance();
       LgService lgService = Provider.of<LgService>(context, listen: false);
+      await lgService.loadSavedData(prefs);
       lgService.checkConnection();
     });
   }

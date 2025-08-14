@@ -41,8 +41,8 @@ import 'dart:convert';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/services.dart';
-import 'package:crypto/crypto.dart'; // MD5 hashing
-import 'dart:typed_data';
+import 'package:crypto/crypto.dart';
+import 'package:shared_preferences/src/shared_preferences_legacy.dart';
 
 class LgService {
   String host = "192.168.121.3";
@@ -414,5 +414,14 @@ fi
     }
 
     await execCommand(query);
+  }
+
+  Future<void> loadSavedData(Future<SharedPreferences> prefs) async {
+    final SharedPreferences preferences = await prefs;
+    host = preferences.getString('host') ?? host;
+    port = preferences.getInt('port') ?? port;
+    username = preferences.getString('username') ?? username;
+    password = preferences.getString('password') ?? password;
+    rigs = preferences.getInt('rigs') ?? rigs;
   }
 }

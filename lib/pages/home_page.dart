@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
+import 'dart:ui' show FontFeature;
 
 import 'package:async/async.dart';
 import 'package:flutter/material.dart';
@@ -46,6 +47,16 @@ class _HomePageState extends State<HomePage> {
   List<SavedSession> recentlyVisualized = [];
   bool _isRecentItemsLoaded = false;
 
+  int _progress = 0;
+  String? _loadingFact;
+
+  void _setProgress(int value) {
+    if (!mounted) return;
+    setState(() {
+      _progress = value.clamp(0, 100).toInt();
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -75,6 +86,7 @@ class _HomePageState extends State<HomePage> {
         if (mounted) {
           setState(() {
             _isLoading = false;
+            _loadingFact = null;
           });
         }
       },
@@ -83,6 +95,12 @@ class _HomePageState extends State<HomePage> {
 
   void stopTask() async {
     await _operation?.cancel();
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+        _loadingFact = null;
+      });
+    }
   }
 
   Future<void> onSubmit() async {
@@ -103,12 +121,16 @@ class _HomePageState extends State<HomePage> {
 
     setState(() {
       _isLoading = true;
+      _progress = 0;
+      _loadingFact = facts[random.nextInt(facts.length)];
     });
+    _setProgress(5);
     print("lag debug: process start");
 
     try {
       ApiService apiService = ApiService();
 
+      _setProgress(10);
       final apiEntity =
           ApiEntity()
             ..variable = selectedParameter
@@ -151,14 +173,18 @@ class _HomePageState extends State<HomePage> {
             ..dateRangeEnabled = isDateRangeEnabled
             ..toDate = isDateRangeEnabled ? DateTime.parse(toDate!) : null;
 
+      _setProgress(25);
       String data = await apiService.fetchData(apiEntity);
+      _setProgress(60);
+
       String imageBase64 = apiService.imageBase64;
       await visualizeData(apiEntity, imageBase64, data: data);
+      _setProgress(100);
     } catch (e) {
       if (e is ClientException) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
+            const SnackBar(
               content: Text('Network error: Could not connect to server'),
             ),
           );
@@ -172,6 +198,7 @@ class _HomePageState extends State<HomePage> {
       if (mounted) {
         setState(() {
           _isLoading = false;
+          _loadingFact = null;
         });
       }
     }
@@ -186,6 +213,8 @@ class _HomePageState extends State<HomePage> {
       print("lag debug: visualizeData function start");
       LgService lgService = Provider.of<LgService>(context, listen: false);
       await lgService.checkConnection();
+      _setProgress(65);
+
       ColorMap colorMap;
       if (apiEntity.variable == 't') {
         colorMap = ColorMap.bluegreenyellowred;
@@ -202,13 +231,20 @@ class _HomePageState extends State<HomePage> {
         colorMap: colorMap,
       );
 
+      _setProgress(70);
       String kml = (await service.generateKml())["kml"];
+      _setProgress(80);
 
       await lgService.sendFile('/var/www/html/heatmap.kml', utf8.encode(kml));
+      _setProgress(85);
+
       await lgService.changeToMars();
+      _setProgress(90);
+
       await lgService.execCommand(
         'echo "http://lg1:81/heatmap.kml" > /var/www/html/kmls.txt',
       );
+      _setProgress(92);
 
       if (apiEntity.isGridEnabled) {
         String content = await rootBundle.loadString(
@@ -218,15 +254,21 @@ class _HomePageState extends State<HomePage> {
           '/var/www/html/grid.kml',
           utf8.encode(content),
         );
+        _setProgress(94);
+
         await lgService.execCommand(
           'echo "http://lg1:81/grid.kml" >> /var/www/html/kmls.txt',
         );
+        _setProgress(96);
+
         await lgService.execCommand(
           'echo "flytoview=<LookAt><longitude>${0.0}</longitude><latitude>${0.0}</latitude><range>${3529400.3297285}</range><tilt>${0}</tilt><heading>${0}</heading><gx:altitudeMode>relativeToGround</gx:altitudeMode></LookAt>" > /tmp/query.txt',
         );
+        _setProgress(98);
       }
 
       if (mounted) {
+        _setProgress(99);
         Navigator.of(context).push(
           MaterialPageRoute(
             builder:
@@ -402,6 +444,9 @@ class _HomePageState extends State<HomePage> {
                               onTap: () async {
                                 setState(() {
                                   _isLoading = true;
+                                  _progress = 0;
+                                  _loadingFact =
+                                      facts[random.nextInt(facts.length)];
                                 });
 
                                 try {
@@ -409,11 +454,13 @@ class _HomePageState extends State<HomePage> {
                                     item.apiEntity,
                                     item.imageBase64,
                                   );
+                                  _setProgress(100);
                                 } catch (e) {
                                   print(e.toString());
                                 } finally {
                                   setState(() {
                                     _isLoading = false;
+                                    _loadingFact = null;
                                   });
                                 }
                               },
@@ -444,6 +491,9 @@ class _HomePageState extends State<HomePage> {
                                 onTap: () async {
                                   setState(() {
                                     _isLoading = true;
+                                    _progress = 0;
+                                    _loadingFact =
+                                        facts[random.nextInt(facts.length)];
                                   });
 
                                   try {
@@ -451,11 +501,13 @@ class _HomePageState extends State<HomePage> {
                                       item.apiEntity,
                                       item.imageBase64,
                                     );
+                                    _setProgress(100);
                                   } catch (e) {
                                     print(e.toString());
                                   } finally {
                                     setState(() {
                                       _isLoading = false;
+                                      _loadingFact = null;
                                     });
                                   }
                                 },
@@ -496,18 +548,8 @@ class _HomePageState extends State<HomePage> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            SizedBox(
-                              width: 50,
-                              height: 50,
-                              child: CircularProgressIndicator(
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Theme.of(context).primaryColor,
-                                ),
-                                strokeWidth: 5,
-                              ),
-                            ),
                             const SizedBox(height: 20),
-                            const Text(
+                            Text(
                               'Generating Visualization...',
                               style: TextStyle(
                                 fontSize: 16,
@@ -516,7 +558,16 @@ class _HomePageState extends State<HomePage> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              facts[random.nextInt(facts.length)],
+                              '$_progress% done',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                fontFeatures: [FontFeature.tabularFigures()],
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              _loadingFact ?? '',
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.grey[600],
