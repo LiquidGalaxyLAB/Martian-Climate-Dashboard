@@ -9,12 +9,15 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:martian_climate_dashboard/services/lg_service.dart';
+import 'package:provider/provider.dart';
 
 class MCDDrawer extends StatelessWidget {
   const MCDDrawer({super.key});
 
   @override
   Widget build(BuildContext context) {
+    LgService lgService = Provider.of<LgService>(context);
     return Drawer(
       shape: const RoundedRectangleBorder(),
       child: Column(
@@ -24,13 +27,30 @@ class MCDDrawer extends StatelessWidget {
           SizedBox(
             height: 100,
             child: DrawerHeader(
-              padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
-              // padding: EdgeInsets.symmetric(horizontal: .0, vertical: 10.0),
-              child: Text(
-                "Mars Vision",
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20.0,
+                vertical: 16.0,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    "Mars Vision",
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(width: 12.0),
+                  Container(
+                    width: 14,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: lgService.connected ? Colors.green : Colors.red,
+                      // color: Colors.red,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -39,6 +59,7 @@ class MCDDrawer extends StatelessWidget {
             leading: const Icon(Icons.settings_outlined),
             title: Text('Connection'),
             onTap: () {
+              Navigator.pop(context);
               Navigator.pushNamed(context, '/connect');
             },
           ),
@@ -47,6 +68,7 @@ class MCDDrawer extends StatelessWidget {
             leading: const Icon(Icons.build_outlined),
             title: Text('Tools'),
             onTap: () {
+              Navigator.pop(context);
               Navigator.pushNamed(context, '/tools');
             },
           ),
@@ -55,6 +77,7 @@ class MCDDrawer extends StatelessWidget {
             leading: const Icon(Icons.code_outlined),
             title: Text('API Key'),
             onTap: () {
+              Navigator.pop(context);
               Navigator.pushNamed(context, '/apiKey');
             },
           ),
@@ -63,6 +86,7 @@ class MCDDrawer extends StatelessWidget {
             leading: const Icon(Icons.info_outline),
             title: Text('About'),
             onTap: () {
+              Navigator.pop(context);
               Navigator.pushNamed(context, '/about');
             },
           ),

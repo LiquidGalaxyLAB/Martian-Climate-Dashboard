@@ -12,7 +12,7 @@ import 'package:martian_climate_dashboard/services/api_service.dart';
 import 'package:martian_climate_dashboard/services/balloon_service.dart';
 import 'package:martian_climate_dashboard/services/gemini_service.dart';
 import 'package:martian_climate_dashboard/services/kml_generatation_service.dart';
-import 'package:martian_climate_dashboard/services/kml_service.dart';
+import 'package:martian_climate_dashboard/services/tour_service.dart';
 import 'package:martian_climate_dashboard/services/lg_service.dart';
 import 'package:martian_climate_dashboard/utils/mars_facts.dart';
 import 'package:martian_climate_dashboard/utils/parameter_map.dart';

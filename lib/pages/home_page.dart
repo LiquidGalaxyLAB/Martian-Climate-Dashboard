@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:math';
-import 'dart:ui' show FontFeature;
 
 import 'package:async/async.dart';
 import 'package:flutter/material.dart';
@@ -19,13 +18,11 @@ import 'package:martian_climate_dashboard/utils/parameter_map.dart';
 import 'package:martian_climate_dashboard/utils/quickly_visualize_data.dart';
 import 'package:martian_climate_dashboard/widgets/button.dart';
 import 'package:martian_climate_dashboard/widgets/check_box.dart';
-import 'package:martian_climate_dashboard/widgets/circular_globe.dart';
 import 'package:martian_climate_dashboard/widgets/date_picker.dart';
 import 'package:martian_climate_dashboard/widgets/drawer.dart';
 import 'package:martian_climate_dashboard/widgets/parameter_picker.dart';
 import 'package:martian_climate_dashboard/widgets/visualization_card.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -213,6 +210,9 @@ class _HomePageState extends State<HomePage> {
       print("lag debug: visualizeData function start");
       LgService lgService = Provider.of<LgService>(context, listen: false);
       await lgService.checkConnection();
+      if (!lgService.connected) {
+        throw Exception('Not connected to the LG server');
+      }
       _setProgress(65);
 
       ColorMap colorMap;
@@ -378,30 +378,31 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ),
                         const SizedBox(height: 3),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(left: 16),
-                              child: DatePicker(
-                                onDateSelected:
-                                    (p0) => setState(() {
-                                      date = p0.toIso8601String();
-                                    }),
-                                enabled: true,
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: DatePicker(
+                                  enabled: true,
+                                  onDateSelected:
+                                      (d) => setState(() {
+                                        date = d.toIso8601String();
+                                      }),
+                                ),
                               ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(right: 16),
-                              child: DatePicker(
-                                onDateSelected:
-                                    (p0) => setState(() {
-                                      toDate = p0.toIso8601String();
-                                    }),
-                                enabled: isDateRangeEnabled,
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: DatePicker(
+                                  enabled: isDateRangeEnabled,
+                                  onDateSelected:
+                                      (d) => setState(() {
+                                        toDate = d.toIso8601String();
+                                      }),
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                         const SizedBox(height: 20),
                         CheckBox(

@@ -124,6 +124,11 @@ class _ConnectPageState extends State<ConnectPage> {
 
                     bool res = await lgService.checkConnection();
                     print(res);
+                    if (!res) {
+                      lgService.connected = false;
+                    } else {
+                      lgService.connected = true;
+                    }
                     if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(

@@ -51,6 +51,7 @@ class LgService {
   String password = "lg";
   int rigs = 3;
   bool marsSelected = false;
+  bool connected = false;
   SSHClient? _client;
   SftpClient? _sftp;
   final Map<String, String> _lastFileHash = {};
@@ -89,10 +90,11 @@ class LgService {
       await changeToMars();
       await sendLogos();
       print('Connected to $host:$port');
-      // return true;
+      connected = true;
       return true;
     } catch (e) {
       print('Failed to connect to $host:$port, $e');
+      connected = false;
       return false;
     }
   }
