@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:martian_climate_dashboard/services/lg_service.dart';
@@ -61,7 +62,9 @@ class _ConnectPageState extends State<ConnectPage> {
               child: MCDButton(
                 textColor: Colors.black,
                 onPressed: () {
-                  print("Scan QR Code");
+                  if (kDebugMode) {
+                    print("Scan QR Code");
+                  }
                   Navigator.of(context).pushNamed('/scan');
                 },
                 text: "Scan Using QR",
@@ -102,7 +105,9 @@ class _ConnectPageState extends State<ConnectPage> {
               child: MCDButton(
                 text: "CONNECT",
                 onPressed: () async {
-                  print(hostController.text);
+                  if (kDebugMode) {
+                    print(hostController.text);
+                  }
                   final SharedPreferences prefs =
                       await SharedPreferences.getInstance();
                   try {
@@ -123,13 +128,16 @@ class _ConnectPageState extends State<ConnectPage> {
                     prefs.setInt('rigs', lgService.rigs);
 
                     bool res = await lgService.checkConnection();
-                    print(res);
+                    if (kDebugMode) {
+                      print(res);
+                    }
                     if (!res) {
                       lgService.connected = false;
                     } else {
                       lgService.connected = true;
                     }
                     if (!mounted) return;
+                    // ignore: use_build_context_synchronously
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(res ? 'Connected' : 'Failed to connect'),
@@ -142,8 +150,11 @@ class _ConnectPageState extends State<ConnectPage> {
                       "echo '$logo' > /var/www/html/kml/slave_${lgService.logoScreen}.kml",
                     );
                   } catch (e) {
-                    print(e.toString());
+                    if (kDebugMode) {
+                      print(e.toString());
+                    }
                     if (!mounted) return;
+                    // ignore: use_build_context_synchronously
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Error: ${e.toString()}')),
                     );

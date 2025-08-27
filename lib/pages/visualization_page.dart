@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:martian_climate_dashboard/entities/api_entity.dart';
@@ -55,7 +56,9 @@ class _VisualizationPageState extends State<VisualizationPage> {
   @override
   void dispose() {
     if (apiKey != null) {
-      print(geminiService.context);
+      if (kDebugMode) {
+        print(geminiService.context);
+      }
       SavedSession.saveSessions(
         SavedSession(
           imageBase64: widget.base64Image,
@@ -102,14 +105,20 @@ class _VisualizationPageState extends State<VisualizationPage> {
 
     try {
       String response = await geminiService.generateSummary();
-      print(response);
+      if (kDebugMode) {
+        print(response);
+      }
       await balloonService.showVisBalloon(
+        // ignore: use_build_context_synchronously
         Provider.of<LgService>(context, listen: false),
         response,
         widget.colorMap,
       );
     } catch (e) {
-      print('Error generating summary: $e');
+      if (kDebugMode) {
+        print('Error generating summary: $e');
+      }
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error generating summary: ${e.toString()}')),
       );
@@ -141,6 +150,7 @@ class _VisualizationPageState extends State<VisualizationPage> {
                 : ColorMap.yelloworangered,
       );
       String kml = (await service.generateKml())["kml"];
+      // ignore: use_build_context_synchronously
       LgService lgService = Provider.of<LgService>(context, listen: false);
 
       await lgService.sendFile('/var/www/html/heatmap.kml', (utf8.encode(kml)));
@@ -165,6 +175,7 @@ class _VisualizationPageState extends State<VisualizationPage> {
         await geminiService.clearContext();
         String newSummary = await geminiService.generateSummary();
         await balloonService.showVisBalloon(
+          // ignore: use_build_context_synchronously
           Provider.of<LgService>(context, listen: false),
           newSummary,
           widget.colorMap,
@@ -174,6 +185,7 @@ class _VisualizationPageState extends State<VisualizationPage> {
       setState(() {
         _isLoading = false;
       });
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error updating date: ${e.toString()}')),
       );
@@ -183,7 +195,9 @@ class _VisualizationPageState extends State<VisualizationPage> {
   Future<void> _buildPrevDate() async {
     if (widget.apiEntity.dateRangeEnabled) {
       final prevDate = currentDate!.subtract(Duration(days: 1));
-      print(prevDate.toIso8601String());
+      if (kDebugMode) {
+        print(prevDate.toIso8601String());
+      }
       setState(() {
         _isLoading = true;
       });
@@ -200,6 +214,7 @@ class _VisualizationPageState extends State<VisualizationPage> {
                 : ColorMap.yelloworangered,
       );
       String kml = (await service.generateKml())["kml"];
+      // ignore: use_build_context_synchronously
       LgService lgService = Provider.of<LgService>(context, listen: false);
 
       await lgService.sendFile('/var/www/html/heatmap.kml', (utf8.encode(kml)));
@@ -234,7 +249,10 @@ class _VisualizationPageState extends State<VisualizationPage> {
       final response = await geminiService.sendMessage(text);
       if (!response['location'].isEmpty) {
         try {
-          print(response['location']);
+          if (kDebugMode) {
+            print(response['location']);
+          }
+          // ignore: use_build_context_synchronously
           LgService lgService = Provider.of<LgService>(context, listen: false);
           BalloonService.showLocationBalloon(
             lgService,
@@ -246,7 +264,9 @@ class _VisualizationPageState extends State<VisualizationPage> {
             'echo "flytoview=<LookAt><longitude>${response['location']['coordinates'][0]}</longitude><latitude>${response['location']['coordinates'][1]}</latitude><range>${3529400.3297285}</range><tilt>${0}</tilt><heading>${0}</heading><gx:altitudeMode>relativeToGround</gx:altitudeMode></LookAt>" > /tmp/query.txt',
           );
         } catch (e) {
-          print('Error showing location balloon: $e');
+          if (kDebugMode) {
+            print('Error showing location balloon: $e');
+          }
         }
       }
       setState(() {
@@ -256,8 +276,11 @@ class _VisualizationPageState extends State<VisualizationPage> {
       setState(() {
         _isWaitingForResponse = false;
       });
-      print(e);
+      if (kDebugMode) {
+        print(e);
+      }
       ScaffoldMessenger.of(
+        // ignore: use_build_context_synchronously
         context,
       ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
     }
@@ -551,6 +574,7 @@ class _VisualizationPageState extends State<VisualizationPage> {
           ),
           if (_isLoading)
             Container(
+              // ignore: deprecated_member_use
               color: Colors.black.withOpacity(0.05),
               width: MediaQuery.of(context).size.width,
               height: double.infinity,

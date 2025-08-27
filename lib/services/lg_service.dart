@@ -40,9 +40,10 @@ library;
 import 'dart:convert';
 
 import 'package:dartssh2/dartssh2.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:crypto/crypto.dart';
-import 'package:shared_preferences/src/shared_preferences_legacy.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LgService {
   String host = "192.168.121.3";
@@ -89,11 +90,15 @@ class LgService {
       await clearKml();
       await changeToMars();
       await sendLogos();
-      print('Connected to $host:$port');
+      if (kDebugMode) {
+        print('Connected to $host:$port');
+      }
       connected = true;
       return true;
     } catch (e) {
-      print('Failed to connect to $host:$port, $e');
+      if (kDebugMode) {
+        print('Failed to connect to $host:$port, $e');
+      }
       connected = false;
       return false;
     }
@@ -111,10 +116,14 @@ class LgService {
       // print("stdout: ${session.stdout}");
       // print(session.stderr);
       session.stdout.listen((data) {
-        print("std out : ${utf8.decode(data)}");
+        if (kDebugMode) {
+          print("std out : ${utf8.decode(data)}");
+        }
       });
       session.stderr.listen((data) {
-        print("std err : ${utf8.decode(data)}");
+        if (kDebugMode) {
+          print("std err : ${utf8.decode(data)}");
+        }
       });
       // print('STDOUT:\n$stdout');
 
@@ -124,7 +133,9 @@ class LgService {
       // ignore: avoid_print
       print('Command sent to $host:$port');
     } catch (e) {
-      print('Failed to send command to $host:$port, $e');
+      if (kDebugMode) {
+        print('Failed to send command to $host:$port, $e');
+      }
     }
     return this;
   }
@@ -135,16 +146,20 @@ class LgService {
           '<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom"><Document></Document></kml>';
       await execCommand('echo "planet=mars" > /tmp/query.txt');
       await execCommand(
-        'echo "$blankKml" > /var/www/html/kml/slave_${balloonScreen}.kml',
+        'echo "$blankKml" > /var/www/html/kml/slave_$balloonScreen.kml',
       );
       marsSelected = true;
     } catch (e) {
-      print('Failed to change to Mars, $e');
+      if (kDebugMode) {
+        print('Failed to change to Mars, $e');
+      }
     }
   }
 
   Future<void> sendLogos() async {
-    print('Sending logos to Liquid Galaxy...');
+    if (kDebugMode) {
+      print('Sending logos to Liquid Galaxy...');
+    }
     String logo = await rootBundle.loadString('assets/kml/logos.kml');
     await execCommand("echo '$logo' > /var/www/html/kml/slave_$logoScreen.kml");
   }
@@ -172,7 +187,9 @@ class LgService {
       );
       _sftp = await _client!.sftp();
     } catch (e) {
-      print('SFTP init failed: $e');
+      if (kDebugMode) {
+        print('SFTP init failed: $e');
+      }
       try {
         _client?.close();
       } catch (_) {}
@@ -197,13 +214,17 @@ class LgService {
       final hash = md5.convert(content).toString();
       final lastHash = _lastFileHash[remoteFilepath];
       if (lastHash == hash) {
-        print('sendFile skipped (unchanged): $remoteFilepath');
+        if (kDebugMode) {
+          print('sendFile skipped (unchanged): $remoteFilepath');
+        }
         return;
       }
 
       await _ensureSftp();
       if (_sftp == null) {
-        print('Falling back (no persistent SFTP) for $remoteFilepath');
+        if (kDebugMode) {
+          print('Falling back (no persistent SFTP) for $remoteFilepath');
+        }
         await _legacySendFile(remoteFilepath, content);
         _lastFileHash[remoteFilepath] = hash;
         return;
@@ -231,9 +252,13 @@ class LgService {
         }
         await file.close();
         _lastFileHash[remoteFilepath] = hash;
-        print('sendFile done (reused SFTP): $remoteFilepath');
+        if (kDebugMode) {
+          print('sendFile done (reused SFTP): $remoteFilepath');
+        }
       } catch (e) {
-        print('Persistent send failed ($remoteFilepath): $e');
+        if (kDebugMode) {
+          print('Persistent send failed ($remoteFilepath): $e');
+        }
         try {
           await disposePersistent();
         } catch (_) {}
@@ -265,9 +290,13 @@ class LgService {
       await file.close();
       sftp.close();
       client.close();
-      print('Legacy sendFile done: $remoteFilepath');
+      if (kDebugMode) {
+        print('Legacy sendFile done: $remoteFilepath');
+      }
     } catch (e) {
-      print('Legacy sendFile failed: $e');
+      if (kDebugMode) {
+        print('Legacy sendFile failed: $e');
+      }
     }
   }
 
@@ -354,7 +383,6 @@ class LgService {
 
   Future<void> relaunch() async {
     final pw = password;
-    final user = username;
 
     for (var i = rigs; i >= 1; i--) {
       try {

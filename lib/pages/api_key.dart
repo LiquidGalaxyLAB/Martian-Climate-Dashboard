@@ -44,6 +44,7 @@ class _ApiKeyPageState extends State<ApiKeyPage> {
       _isLoading = false;
     });
 
+    // ignore: use_build_context_synchronously
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('API Key saved successfully!'),
@@ -51,6 +52,7 @@ class _ApiKeyPageState extends State<ApiKeyPage> {
       ),
     );
 
+    // ignore: use_build_context_synchronously
     Navigator.pop(context);
   }
 

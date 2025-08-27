@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class GeminiService {
@@ -31,7 +32,9 @@ class GeminiService {
   }
 
   Future<String> generateSummary() async {
-    print("Generating summary...");
+    if (kDebugMode) {
+      print("Generating summary...");
+    }
     try {
       final uri = Uri.parse('$geminiUrl?key=$apiKey');
       final headers = {'Content-Type': 'application/json'};
@@ -78,12 +81,18 @@ class GeminiService {
       };
 
       String payload = jsonEncode(requestBody);
-      print("Request Payload: $payload");
+      if (kDebugMode) {
+        print("Request Payload: $payload");
+      }
       final response = await client.post(uri, headers: headers, body: payload);
 
-      print("API Status Code: ${response.statusCode}");
+      if (kDebugMode) {
+        print("API Status Code: ${response.statusCode}");
+      }
       final responseData = jsonDecode(response.body);
-      print("API Response: ${response.body}");
+      if (kDebugMode) {
+        print("API Response: ${response.body}");
+      }
 
       if (response.statusCode != 200) {
         throw Exception(
@@ -103,7 +112,9 @@ class GeminiService {
 
       final content = candidate['content'];
       if (content['parts'] == null || content['parts'].isEmpty) {
-        print('Full content object: $content');
+        if (kDebugMode) {
+          print('Full content object: $content');
+        }
         throw Exception('No parts in content');
       }
 
@@ -125,7 +136,9 @@ class GeminiService {
 
       return summaryText;
     } catch (e) {
-      print('Error generating summary: $e');
+      if (kDebugMode) {
+        print('Error generating summary: $e');
+      }
       return 'Error generating summary: ${e.toString()}';
     }
   }
@@ -230,7 +243,9 @@ class GeminiService {
 
       final output = responseList[0].trim();
       final jsonPart = responseList.length < 2 ? '{}' : responseList[1].trim();
-      print("response: $jsonPart, $output");
+      if (kDebugMode) {
+        print("response: $jsonPart, $output");
+      }
 
       Map<String, dynamic> locationData = jsonDecode(jsonPart);
 
@@ -243,7 +258,9 @@ class GeminiService {
 
       return {"summary": output, "location": locationData};
     } catch (e) {
-      print('Error sending message: $e');
+      if (kDebugMode) {
+        print('Error sending message: $e');
+      }
       throw Exception('Failed to get response: ${e.toString()}');
     }
   }

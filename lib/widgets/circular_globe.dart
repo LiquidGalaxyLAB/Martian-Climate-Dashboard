@@ -26,7 +26,6 @@ class SphereProjectionImage extends StatefulWidget {
 
 class SphereProjectionImageState extends State<SphereProjectionImage> {
   ui.Image? _image; // final (possibly cropped) image used for drawing
-  ui.Image? _croppedImage; // retained only to dispose if needed
   ui.Shader? _shader; // Image shader bound to _image
   ui.Vertices? _vertices; // Cached sphere mesh for current size/image
   Size? _lastSize; // To detect when to rebuild mesh
@@ -62,7 +61,7 @@ class SphereProjectionImageState extends State<SphereProjectionImage> {
       ui.Image finalImage = decoded;
       if (crop != null) {
         finalImage = await _cropImage(decoded, crop);
-        _croppedImage = finalImage; // keep a ref to dispose later if desired
+        // keep a ref to dispose later if desired
       }
 
       // Build shader & mesh
@@ -198,7 +197,6 @@ class SphereProjectionImageState extends State<SphereProjectionImage> {
     _vertices = null;
     _shader = null;
     _image = null;
-    _croppedImage = null;
   }
 
   @override

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:async/async.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart';
@@ -64,7 +65,9 @@ class _HomePageState extends State<HomePage> {
     if (_isRecentItemsLoaded) return;
 
     final sessions = await SavedSession.loadSessions();
-    print(sessions[0].apiEntity.variable);
+    if (kDebugMode) {
+      print(sessions[0].apiEntity.variable);
+    }
     // SharedPreferences prefs = await SharedPreferences.getInstance();
     // await prefs.remove('saved_sessions');
 
@@ -122,7 +125,9 @@ class _HomePageState extends State<HomePage> {
       _loadingFact = facts[random.nextInt(facts.length)];
     });
     _setProgress(5);
-    print("lag debug: process start");
+    if (kDebugMode) {
+      print("lag debug: process start");
+    }
 
     try {
       ApiService apiService = ApiService();
@@ -207,7 +212,9 @@ class _HomePageState extends State<HomePage> {
     String? data,
   }) async {
     try {
-      print("lag debug: visualizeData function start");
+      if (kDebugMode) {
+        print("lag debug: visualizeData function start");
+      }
       LgService lgService = Provider.of<LgService>(context, listen: false);
       await lgService.checkConnection();
       if (!lgService.connected) {
@@ -288,25 +295,6 @@ class _HomePageState extends State<HomePage> {
       }
       rethrow;
     }
-  }
-
-  String _formatDate(DateTime? dt) {
-    if (dt == null) return 'No date';
-    const monthNames = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ];
-    return '${monthNames[dt.month - 1]} ${dt.day}, ${dt.year}';
   }
 
   @override
@@ -457,7 +445,9 @@ class _HomePageState extends State<HomePage> {
                                   );
                                   _setProgress(100);
                                 } catch (e) {
-                                  print(e.toString());
+                                  if (kDebugMode) {
+                                    print(e.toString());
+                                  }
                                 } finally {
                                   setState(() {
                                     _isLoading = false;
@@ -504,7 +494,9 @@ class _HomePageState extends State<HomePage> {
                                     );
                                     _setProgress(100);
                                   } catch (e) {
-                                    print(e.toString());
+                                    if (kDebugMode) {
+                                      print(e.toString());
+                                    }
                                   } finally {
                                     setState(() {
                                       _isLoading = false;
@@ -529,6 +521,7 @@ class _HomePageState extends State<HomePage> {
           ),
           if (_isLoading)
             Container(
+              // ignore: deprecated_member_use
               color: Colors.black.withOpacity(0.5),
               child: Center(
                 child: Center(

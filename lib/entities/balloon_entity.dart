@@ -92,14 +92,7 @@ class BalloonEntity {
           stops.entries.toList()..sort((a, b) => a.key.compareTo(b.key));
 
       String gradient =
-          'linear-gradient(90deg, ' +
-          sortedStops
-              .map(
-                (entry) =>
-                    '${rgbToHex(entry.value)} ${(entry.key * 100).toStringAsFixed(1)}%',
-              )
-              .join(', ') +
-          ')';
+          'linear-gradient(90deg, ${sortedStops.map((entry) => '${rgbToHex(entry.value)} ${(entry.key * 100).toStringAsFixed(1)}%').join(', ')})';
       return gradient;
     }
 
