@@ -1,7 +1,6 @@
 //    await sshConnection.sendCommand('echo \'planet=$planet\' > /tmp/query.txt');
 
 import 'package:flutter/material.dart';
-import 'package:martian_climate_dashboard/entities/state_entity.dart';
 import 'package:martian_climate_dashboard/services/lg_service.dart';
 import 'package:martian_climate_dashboard/utils/routes.dart';
 import 'package:martian_climate_dashboard/utils/themedata.dart';
@@ -25,7 +24,6 @@ class MyApp extends StatelessWidget {
       title: 'Mars Vision',
       routes: routes(context),
       theme: AppTheme.lightTheme,
-      // darkTheme: AppTheme.darkTheme,
       debugShowCheckedModeBanner: false,
     );
   }

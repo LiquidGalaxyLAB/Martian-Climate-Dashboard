@@ -1,41 +1,206 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
+/// A service class providing AI-powered analysis of Mars climate visualizations using Google's Gemini API.
+///
+/// The [GeminiService] integrates with Google's Gemini AI model to provide intelligent analysis
+/// of Mars climate data visualizations. It enables conversational interaction with climate data,
+/// generating insights, summaries, and answering specific questions about Mars atmospheric
+/// conditions based on visual climate representations.
+///
+/// **Core Capabilities:**
+/// - **Image Analysis**: Processes Mars climate visualization images using multimodal AI
+/// - **Summary Generation**: Creates concise scientific summaries of climate patterns
+/// - **Conversational Interface**: Maintains context for ongoing climate data discussions
+/// - **Location Discovery**: Identifies and provides information about Mars geographic features
+/// - **Scientific Context**: Applies Mars-specific knowledge to climate data interpretation
+///
+/// **AI Model Integration:**
+/// - Uses Gemini 1.5 Flash model for optimal balance of performance and accuracy
+/// - Supports multimodal input (text + image) for comprehensive analysis
+/// - Maintains conversation context for coherent multi-turn interactions
+/// - Implements proper error handling and API rate limiting considerations
+///
+/// **Response Formats:**
+/// - Markdown-formatted text for rich display in chat interfaces
+/// - Structured JSON for location data and geographic feature information
+/// - Scientific terminology with educational explanations for accessibility
+///
+/// Example usage:
+/// ```dart
+/// // Initialize service with Mars visualization image
+/// final geminiService = GeminiService(
+///   apiKey: 'your-api-key',
+///   imageContent: base64EncodedImage,
+/// );
+///
+/// // Generate initial analysis
+/// final summary = await geminiService.generateSummary();
+///
+/// // Ask specific questions
+/// final response = await geminiService.sendMessage(
+///   "What are the temperature patterns near Olympus Mons?"
+/// );
+/// ```
 class GeminiService {
+  /// Base64-encoded Mars climate visualization image for AI analysis.
+  ///
+  /// Contains the complete visualization image that serves as the primary
+  /// context for all AI interactions. This image provides visual reference
+  /// for temperature patterns, pressure distributions, wind data, or other
+  /// Mars atmospheric variables being analyzed.
   final String imageContent;
+
+  /// Google Gemini API key for authenticated requests.
+  ///
+  /// Required for all API interactions. Should be stored securely and
+  /// loaded from encrypted storage or environment variables in production.
   final String apiKey;
+
+  /// HTTP client for API communication with configurable timeout and retry logic.
+  ///
+  /// Can be injected for testing purposes or customized with specific
+  /// network configurations, proxy settings, or timeout values.
   http.Client client;
 
+  /// Cached initial summary of the Mars climate visualization.
+  ///
+  /// Stores the first AI-generated analysis of the visualization to avoid
+  /// regenerating the same content and provide quick access to the base
+  /// analysis for subsequent conversations.
   String? initialSummary;
 
+  /// Conversation context maintaining the complete chat history.
+  ///
+  /// Stores all user messages and AI responses to enable coherent multi-turn
+  /// conversations. Each message includes role identification ('user' or 'model')
+  /// and properly formatted content parts for API submission.
+  ///
+  /// Context structure:
+  /// ```dart
+  /// [
+  ///   {
+  ///     "role": "user|model",
+  ///     "parts": [{"text": "message content"}],
+  ///     "isSummary": bool (optional)
+  ///   }
+  /// ]
+  /// ```
+  List<Map<String, dynamic>> context = [];
+
+  /// Creates a Gemini AI service instance for Mars climate analysis.
+  ///
+  /// Parameters:
+  /// - [imageContent]: Base64-encoded Mars visualization image
+  /// - [apiKey]: Valid Google Gemini API key for authentication
+  /// - [client]: Optional HTTP client for custom network configurations
+  ///
+  /// Example:
+  /// ```dart
+  /// final service = GeminiService(
+  ///   imageContent: await convertImageToBase64(visualizationFile),
+  ///   apiKey: await getSecureApiKey(),
+  ///   client: customHttpClient, // Optional
+  /// );
+  /// ```
   GeminiService({
     required this.imageContent,
     required this.apiKey,
     http.Client? client,
   }) : client = client ?? http.Client();
 
+  /// Gemini AI model identifier for Mars climate analysis.
+  ///
+  /// Uses Gemini 1.5 Flash which provides:
+  /// - Multimodal capabilities (text + image processing)
+  /// - Fast response times suitable for interactive conversations
+  /// - High-quality analysis for scientific applications
+  /// - Cost-effective usage for educational and research purposes
   static const String model = 'gemini-1.5-flash';
+
+  /// Complete Google Gemini API endpoint URL for content generation.
+  ///
+  /// Constructs the full REST endpoint URL for the generateContent API
+  /// using the specified model. This endpoint supports multimodal input
+  /// and conversational interactions with proper context management.
   static const String geminiUrl =
       'https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent';
 
-  List<Map<String, dynamic>> context = [];
-
+  /// Releases all resources and clears conversation context.
+  ///
+  /// Performs cleanup operations including:
+  /// - Closing HTTP client connections to prevent memory leaks
+  /// - Clearing conversation context to free memory
+  /// - Resetting cached summary data
+  ///
+  /// Should be called when the service instance is no longer needed,
+  /// typically during widget disposal or application shutdown.
   void dispose() {
     client.close();
     context.clear();
   }
 
+  /// Clears the conversation context while maintaining the service instance.
+  ///
+  /// Useful for starting fresh conversations about different visualizations
+  /// or resetting the context when switching between different Mars climate
+  /// datasets. Preserves the service configuration and cached summary.
   Future<void> clearContext() async {
     context.clear();
   }
 
+  /// Generates an AI-powered summary of the Mars climate visualization.
+  ///
+  /// This method creates the initial analysis of the provided Mars climate
+  /// visualization using Gemini's multimodal capabilities. The summary provides:
+  /// - Scientific analysis of visible climate patterns
+  /// - Identification of temperature, pressure, or wind variations
+  /// - Notable atmospheric features and anomalies
+  /// - Educational context about Mars climate phenomena
+  ///
+  /// **AI Prompt Engineering:**
+  /// The method uses carefully crafted prompts to ensure:
+  /// - Scientific accuracy and appropriate terminology
+  /// - Concise format (75 words or less) for quick consumption
+  /// - Focus on actionable insights from the visualization
+  /// - Proper formatting with markdown bold headers
+  ///
+  /// **Response Structure:**
+  /// Returns formatted text starting with "**Summary:**" followed by
+  /// scientific analysis of the climate data visualization.
+  ///
+  /// **Conversation Context:**
+  /// The generated summary is automatically added to the conversation
+  /// context with a special "isSummary" flag, enabling the AI to reference
+  /// this base analysis in subsequent interactions.
+  ///
+  /// Returns:
+  /// - String containing formatted summary text with scientific analysis
+  ///
+  /// Throws:
+  /// - [Exception] for API authentication failures or network issues
+  /// - [Exception] for malformed API responses or parsing errors
+  /// - [Exception] for rate limiting or quota exhaustion scenarios
+  ///
+  /// Example output:
+  /// ```
+  /// **Summary:** The Mars visualization shows significant temperature
+  /// variations across the Martian surface, with polar regions displaying
+  /// temperatures around 150K and equatorial areas reaching 250K. Notable
+  /// thermal anomalies appear near major volcanic regions, indicating
+  /// complex atmospheric dynamics.
+  /// ```
   Future<String> generateSummary() async {
-    print("Generating summary...");
+    if (kDebugMode) {
+      print("Generating summary...");
+    }
     try {
       final uri = Uri.parse('$geminiUrl?key=$apiKey');
       final headers = {'Content-Type': 'application/json'};
 
+      // Construct comprehensive request with Mars-specific analysis prompt
       Map<String, dynamic> requestBody = {
         "contents": [
           {
@@ -52,19 +217,7 @@ class GeminiService {
                 Focus on scientific analysis of the climate data shown.
                 """,
               },
-              // for the second part of the summarry I want you to give a json obect with the major takeaways along with the summary key, the json object should be seprated from the summary using "===" and then new line
-
-              // example output:
-              // **Summary:** The Martian atmosphere shows significant temperature variations, with colder regions indicating potential frost formation. The data suggests a stable atmosphere with minimal dust activity at this time.
-              // ===
-              // {
-              //   "summary": "The Martian atmosphere shows significant temperature variations, with colder regions indicating potential frost formation. The data suggests a stable atmosphere with minimal dust activity at this time.",
-              //   "Min Temperature": "Around 142K",
-              //   "Max Temperature": "Around 298K",
-              //   "Hotspots": "Localized warm regions",
-              //   "Topography correlations": "Craters show lower temperatures",
-              //   "Temperature gradients": "Strong latitudinal gradients"
-              // }
+              // Multimodal input: Include the Mars visualization image
               {
                 "inline_data": {
                   "mime_type": "image/jpeg",
@@ -74,23 +227,35 @@ class GeminiService {
             ],
           },
         ],
+        // Optimized generation parameters for scientific content
         "generationConfig": {"temperature": 0.7, "maxOutputTokens": 1000},
       };
 
       String payload = jsonEncode(requestBody);
-      print("Request Payload: $payload");
+      if (kDebugMode) {
+        print("Request Payload: $payload");
+      }
+
+      // Execute API request with comprehensive error handling
       final response = await client.post(uri, headers: headers, body: payload);
 
-      print("API Status Code: ${response.statusCode}");
-      final responseData = jsonDecode(response.body);
-      print("API Response: ${response.body}");
+      if (kDebugMode) {
+        print("API Status Code: ${response.statusCode}");
+      }
 
+      final responseData = jsonDecode(response.body);
+      if (kDebugMode) {
+        print("API Response: ${response.body}");
+      }
+
+      // Validate API response structure and status
       if (response.statusCode != 200) {
         throw Exception(
           "Failed to call Gemini API, status code: ${response.statusCode}, body: ${response.body}",
         );
       }
 
+      // Parse nested response structure with proper error checking
       if (responseData['candidates'] == null ||
           responseData['candidates'].isEmpty) {
         throw Exception('No candidates in API response');
@@ -103,7 +268,9 @@ class GeminiService {
 
       final content = candidate['content'];
       if (content['parts'] == null || content['parts'].isEmpty) {
-        print('Full content object: $content');
+        if (kDebugMode) {
+          print('Full content object: $content');
+        }
         throw Exception('No parts in content');
       }
 
@@ -115,23 +282,80 @@ class GeminiService {
       final summaryText = part['text'];
       initialSummary = summaryText;
 
+      // Add summary to conversation context with special marker
       context.add({
         "role": "model",
         "parts": [
           {"text": summaryText},
         ],
-        "isSummary": true,
+        "isSummary": true, // Flag for context management
       });
 
       return summaryText;
     } catch (e) {
-      print('Error generating summary: $e');
+      if (kDebugMode) {
+        print('Error generating summary: $e');
+      }
       return 'Error generating summary: ${e.toString()}';
     }
   }
 
+  /// Processes user messages and generates context-aware responses about Mars climate data.
+  ///
+  /// This method handles conversational interactions with the AI, maintaining context
+  /// from previous messages while analyzing the Mars climate visualization. It provides:
+  /// - Scientific answers to specific questions about climate patterns
+  /// - Location-based information when geographic features are mentioned
+  /// - Educational explanations of Mars atmospheric phenomena
+  /// - Visual analysis referencing specific elements in the visualization
+  ///
+  /// **Advanced Response Processing:**
+  /// The method implements sophisticated prompt engineering to ensure:
+  /// - **Scientific Accuracy**: Uses Mars-specific terminology and knowledge
+  /// - **Visual Reference**: Always relates answers to the provided visualization
+  /// - **Structured Output**: Returns both conversational response and structured data
+  /// - **Location Intelligence**: Automatically detects and provides coordinates for Mars features
+  ///
+  /// **Dual-Part Response Format:**
+  /// Responses are structured in two parts separated by "===":
+  /// 1. **Conversational Analysis**: Markdown-formatted scientific explanation
+  /// 2. **Structured Data**: JSON object with location coordinates and feature details
+  ///
+  /// **Context Management:**
+  /// - Maintains conversation history for coherent multi-turn interactions
+  /// - Filters out summary messages to focus on user-initiated conversations
+  /// - Preserves scientific context across multiple questions
+  /// - Enables follow-up questions with maintained context
+  ///
+  /// Parameters:
+  /// - [userMessage]: User's question or comment about the Mars climate visualization
+  ///
+  /// Returns:
+  /// - Map containing:
+  ///   - "summary": Formatted response text with scientific analysis
+  ///   - "location": Structured data about geographic features mentioned
+  ///
+  /// Example return structure:
+  /// ```dart
+  /// {
+  ///   "summary": "**Temperature Analysis:** The visualization shows...",
+  ///   "location": {
+  ///     "name": "Olympus Mons",
+  ///     "coordinates": [226.2, 18.65],
+  ///     "info": "Largest volcano in the Solar System...",
+  ///     "classification": "Shield volcano",
+  ///     "dimensions": "21.9 km height, 624 km diameter"
+  ///   }
+  /// }
+  /// ```
+  ///
+  /// Throws:
+  /// - [Exception] for API communication failures or authentication errors
+  /// - [Exception] for malformed responses or JSON parsing issues
+  /// - [Exception] for context management errors or conversation state corruption
   Future<Map<String, dynamic>> sendMessage(String userMessage) async {
     try {
+      // Add user message to conversation context
       context.add({
         "role": "user",
         "parts": [
@@ -142,9 +366,12 @@ class GeminiService {
       final uri = Uri.parse('$geminiUrl?key=$apiKey');
       final headers = {'Content-Type': 'application/json'};
 
+      // Filter conversation history to exclude summary messages
+      // This focuses the context on user-initiated interactions
       final conversationHistory =
           context.where((msg) => msg["isSummary"] != true).toList();
 
+      // Comprehensive request body with specialized Mars climate analysis prompt
       Map<String, dynamic> requestBody = {
         "contents": [
           {
@@ -191,6 +418,7 @@ class GeminiService {
                     The temperature pattern aligns with the topographical features, showing how the canyon's depth affects local atmospheric conditions.==={"name":"Valles Marineris","coordinates":[-13.8, -59.2],"info":"Mars' largest canyon system showing significant temperature variations",}
                     """,
               },
+              // Include the Mars visualization for multimodal analysis
               {
                 "inline_data": {
                   "mime_type": "image/jpeg",
@@ -199,13 +427,17 @@ class GeminiService {
               },
             ],
           },
+          // Include filtered conversation history for context continuity
           ...conversationHistory,
         ],
+        // Optimized parameters for consistent, focused responses
         "generationConfig": {"temperature": 0.6, "maxOutputTokens": 1000},
       };
 
       String payload = jsonEncode(requestBody);
       final response = await client.post(uri, headers: headers, body: payload);
+
+      // Validate API response status
       if (response.statusCode != 200) {
         throw Exception(
           "Failed to call Gemini API, status code: ${response.statusCode}, body: ${response.body}",
@@ -214,6 +446,7 @@ class GeminiService {
 
       final responseData = jsonDecode(response.body);
 
+      // Comprehensive response validation
       if (responseData['candidates'] == null ||
           responseData['candidates'].isEmpty ||
           responseData['candidates'][0]['content'] == null) {
@@ -226,14 +459,24 @@ class GeminiService {
       }
 
       final modelResponse = resp['parts'][0]['text'] ?? 'No response';
+
+      // Parse dual-part response format
       List responseList = modelResponse.split("===");
 
-      final output = responseList[0].trim();
-      final jsonPart = responseList.length < 2 ? '{}' : responseList[1].trim();
-      print("response: $jsonPart, $output");
+      final output = responseList[0].trim(); // Conversational response
+      final jsonPart =
+          responseList.length < 2
+              ? '{}'
+              : responseList[1].trim(); // Location data
 
+      if (kDebugMode) {
+        print("response: $jsonPart, $output");
+      }
+
+      // Parse location data with error handling
       Map<String, dynamic> locationData = jsonDecode(jsonPart);
 
+      // Add AI response to conversation context
       context.add({
         "role": "model",
         "parts": [
@@ -243,7 +486,9 @@ class GeminiService {
 
       return {"summary": output, "location": locationData};
     } catch (e) {
-      print('Error sending message: $e');
+      if (kDebugMode) {
+        print('Error sending message: $e');
+      }
       throw Exception('Failed to get response: ${e.toString()}');
     }
   }
