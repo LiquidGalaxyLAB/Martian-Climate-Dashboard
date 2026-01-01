@@ -28,6 +28,22 @@ Martian Climate Dashboard is a Flutter application for visualizing Martian clima
 
 ## Getting Started
 
+## Prerequisites
+
+Before running the app, ensure the following are installed:
+
+- Flutter (latest stable version recommended)
+- Dart SDK (comes with Flutter)
+- Android Studio or VS Code with Flutter plugin
+- An Android emulator or physical device
+
+## Common Issues
+
+- If `flutter run` fails, ensure Flutter is added to your system PATH.
+- Run `flutter doctor` to check for missing dependencies.
+- Make sure an emulator or device is connected before running the app.
+
+
 Before you begin, ensure you have [Git](https://git-scm.com/) and [Flutter](https://flutter.dev) installed. See the [Flutter documentation](https://docs.flutter.dev) for setup instructions.
 
 Clone the repository:
